@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Guided Demo Scenarios{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-[#EADBCE] pb-5 gap-4">
+    <div>
+      <div class="flex items-center space-x-2">
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F3EDE2] text-[#BA5624] border border-[#EADBCE]">Classroom Presentation Mode</span>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">Live Interactive Testing</span>
+      </div>
+      <h1 class="font-serif text-3xl font-medium text-[#20120B] mt-2">CampusConnect Demo Center</h1>
+      <p class="text-xs text-[#7A695E] mt-1 font-sans">
+        Run 6 live scripted scenarios proving deterministic slot intersection, 3-layer availability, group cohort detection, and calendar cascades.
+      </p>
+    </div>
+
+    <!-- 1-Click Database Reset -->
+    <form method="POST" action="/demo/reset">
+      <button type="submit" class="btn-secondary-warm btn-glow-subtle font-bold text-xs px-4 py-2.5 rounded-full shadow-sm" onclick="return confirm('Restore database to clean initial seed data?');">
+        🔄 Reset to Fresh Seed State
+      </button>
+    </form>
+  </div>
+
+  <!-- Scenario Execution Flash Message -->
+  {% if result %}
+    <div class="bg-[#FAF0D7] border border-[#F4B342] rounded-3xl p-6 shadow-sm space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="text-2xl">✨</span>
+          <h2 class="font-serif text-lg font-medium text-[#20120B]">{{ result.title }}</h2>
+        </div>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+          Executed Successfully
+        </span>
+      </div>
+      <p class="text-xs text-[#5C4D44] leading-relaxed">{{ result.summary }}</p>
+      
+      {% if result.details %}
+        <div class="bg-white/95 rounded-2xl p-4 border border-[#EADBCE] text-xs space-y-2">
+          <p class="font-bold text-[#20120B]">Live Verification Telemetry:</p>
+          <ul class="list-disc pl-5 space-y-1 text-[#7A695E]">
+            {% for item in result.details %}
+              <li>{{ item }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      {% if result.action_link %}
+        <div class="pt-2">
+          <a href="{{ result.action_link }}" class="btn-terracotta btn-glow inline-flex items-center text-xs font-bold px-4 py-2 rounded-full">
+            {{ result.action_text or 'Inspect Live Screen &rarr;' }}
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <!-- 6 Guided Scenarios Cards Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <!-- Scenario 1 -->
+    <div class="bg-white rounded-3xl border border-[#EADBCE] p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition card-hover-lift">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-2xl">💡</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F3EDE2] text-[#BA5624] border border-[#EADBCE]">Scenario 1</span>
+        </div>
+        <h3 class="font-serif text-lg font-medium text-[#20120B]">Meera's Thursday Doubt Hour</h3>
+        <p class="text-xs text-[#7A695E] leading-relaxed">
+          Student Meera queries Dr. Swaminathan's Thursday office hour. Slot matching verifies her lab schedule, filters conflicting class periods, and scores the remaining slots.
+        </p>
+      </div>
+      <form method="POST" action="/demo/run/1">
+        <button type="submit" class="btn-terracotta btn-glow w-full font-bold text-xs py-2.5 rounded-full shadow-sm">
+          ▶ Run Scenario 1
+        </button>
+      </form>
+    </div>
+
+    <!-- Scenario 2 -->
+    <div class="bg-white rounded-3xl border border-[#EADBCE] p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition card-hover-lift">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-2xl">⚡</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F3EDE2] text-[#BA5624] border border-[#EADBCE]">Scenario 2</span>
+        </div>
+        <h3 class="font-serif text-lg font-medium text-[#20120B]">Office-Hour Capacity & Auto-Confirm</h3>
+        <p class="text-xs text-[#7A695E] leading-relaxed">
+          Demonstrates Layer 3 state machine: Bookings auto-confirm instantly until office-hour capacity limit is reached; subsequent requests transition into pending queue.
+        </p>
+      </div>
+      <form method="POST" action="/demo/run/2">
+        <button type="submit" class="btn-terracotta btn-glow w-full font-bold text-xs py-2.5 rounded-full shadow-sm">
+          ▶ Run Scenario 2
+        </button>
+      </form>
+    </div>
+
+    <!-- Scenario 3 -->
+    <div class="bg-white rounded-3xl border border-[#EADBCE] p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition card-hover-lift">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-2xl">👥</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F3EDE2] text-[#BA5624] border border-[#EADBCE]">Scenario 3</span>
+        </div>
+        <h3 class="font-serif text-lg font-medium text-[#20120B]">Cohort Group Session & Clash Filter</h3>
+        <p class="text-xs text-[#7A695E] leading-relaxed">
+          4 students submit doubts on "Data Structures". 3 students are provably free in the office hour and grouped; 1 student busy in class is strictly excluded.
+        </p>
+      </div>
+      <form method="POST" action="/demo/run/3">
+        <button type="submit" class="btn-terracotta btn-glow w-full font-bold text-xs py-2.5 rounded-full shadow-sm">
+          ▶ Run Scenario 3
+        </button>
+      </form>
+    </div>
+
+    <!-- Scenario 4 -->
+    <div class="bg-white rounded-3xl border border-[#EADBCE] p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition card-hover-lift">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-2xl">⏳</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F3EDE2] text-[#BA5624] border border-[#EADBCE]">Scenario 4</span>
+        </div>
+        <h3 class="font-serif text-lg font-medium text-[#20120B]">Layer 1: On-Demand Prediction</h3>
+        <p class="text-xs text-[#7A695E] leading-relaxed">
+          Student requests a time during faculty's predicted free period (no class). System transparently labels it "Likely Free - Not a Commitment" and keeps request Pending.
+        </p>
+      </div>
+      <form method="POST" action="/demo/run/4">
+        <button type="submit" class="btn-terracotta btn-glow w-full font-bold text-xs py-2.5 rounded-full shadow-sm">
+          ▶ Run Scenario 4
+        </button>
+      </form>
+    </div>
+
+    <!-- Scenario 5 -->
+    <div class="bg-white rounded-3xl border border-[#EADBCE] p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition card-hover-lift">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-2xl">📢</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F3EDE2] text-[#BA5624] border border-[#EADBCE]">Scenario 5</span>
+        </div>
+        <h3 class="font-serif text-lg font-medium text-[#20120B]">Schedule Change: Verified vs Unverified</h3>
+        <p class="text-xs text-[#7A695E] leading-relaxed">
+          Faculty swap directly shifts available periods. Crowdsourced student swap report leaves teaching hours untouched but flags a warning badge on slot cards.
+        </p>
+      </div>
+      <form method="POST" action="/demo/run/5">
+        <button type="submit" class="btn-terracotta btn-glow w-full font-bold text-xs py-2.5 rounded-full shadow-sm">
+          ▶ Run Scenario 5
+        </button>
+      </form>
+    </div>
+
+    <!-- Scenario 6 -->
+    <div class="bg-white rounded-3xl border border-[#EADBCE] p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition card-hover-lift">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-2xl">🗓️</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F3EDE2] text-[#BA5624] border border-[#EADBCE]">Scenario 6</span>
+        </div>
+        <h3 class="font-serif text-lg font-medium text-[#20120B]">Holiday Cascade & Day-Order Shift</h3>
+        <p class="text-xs text-[#7A695E] leading-relaxed">
+          Admin declares an unexpected holiday on Wednesday. The academic calendar cascades forward, shifting Day Orders for all subsequent working days.
+        </p>
+      </div>
+      <form method="POST" action="/demo/run/6">
+        <button type="submit" class="btn-terracotta btn-glow w-full font-bold text-xs py-2.5 rounded-full shadow-sm">
+          ▶ Run Scenario 6
+        </button>
+      </form>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

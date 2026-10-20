@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Book Consultation - CampusConnect{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header & Timetable Mode Status -->
+  <div class="border-b border-warm-border pb-4">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div>
+        <h1 class="font-serif text-3xl font-bold text-espresso">Find Consultation Time</h1>
+        <p class="text-xs text-warm-muted mt-1">
+          CampusConnect cross-references your weekly schedule with the professor's consultation hours to find optimal conflict-free slots.
+        </p>
+      </div>
+
+      <!-- Mode Pill -->
+      <div>
+        {% if has_timetable %}
+          <span class="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Smart Match Active (Clashes filtered)</span>
+          </span>
+        {% else %}
+          <span class="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amberwarm-light text-espresso border border-amberwarm/40">
+            <span class="w-2 h-2 rounded-full bg-amberwarm"></span>
+            <span>Manual Mode (Timetable not loaded)</span>
+          </span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    
+    <!-- Left Column: Search & Preference Form (lg:col-span-5) -->
+    <div class="lg:col-span-5 bg-warm-surface p-7 rounded-3xl border border-warm-border shadow-sm space-y-5">
+      <h2 class="font-serif text-lg font-bold text-espresso border-b border-warm-border pb-2.5">
+        1. Select Professor & Topic
+      </h2>
+
+      <form id="booking-params" class="space-y-4">
+        
+        <!-- Faculty Selector -->
+        <div>
+          <label class="block text-xs font-bold text-espresso mb-1">Faculty Member *</label>
+          <select id="faculty-select" name="faculty_id" onchange="window.location.href='/student/book/' + this.value"
+            class="w-full text-xs rounded-xl border border-warm-border p-3 bg-white text-espresso focus:ring-2 focus:ring-terracotta focus:outline-none cursor-pointer">
+            <option value="">-- Choose a Professor --</option>
+            {% for f in all_faculty %}
+              <option value="{{ f.id }}" {% if selected_faculty and selected_faculty.id == f.id %}selected{% endif %}>
+                {{ f.name }} ({{ f.department.split('&')[0].strip() }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        {% if selected_faculty %}
+          <!-- Course Selector -->
+          <div>
+            <label class="block text-xs font-bold text-espresso mb-1">Course *</label>
+            <select name="course_id" id="course_id" class="w-full text-xs rounded-xl border border-warm-border p-3 bg-white text-espresso focus:ring-2 focus:ring-terracotta focus:outline-none cursor-pointer">
+              {% for c in faculty_courses %}
+                <option value="{{ c.id }}">{{ c.code }} - {{ c.name }}</option>
+              {% else %}
+                <option value="">General Consultation</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Topic Tag -->
+          <div>
+            <label class="block text-xs font-bold text-espresso mb-1">Topic or Doubt Concept *</label>
+            <input type="text" name="topic_tag" id="topic_tag" placeholder="e.g. Binary Trees, Lab 2 Pointer Bug..." value="Binary Trees"
+              class="w-full text-xs rounded-xl border border-warm-border p-3 bg-white text-espresso focus:ring-2 focus:ring-terracotta focus:outline-none" required>
+          </div>
+
+          <!-- Request Category -->
+          <div>
+            <label class="block text-xs font-bold text-espresso mb-1.5">Category</label>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <label class="flex items-center space-x-2 p-2.5 border border-warm-border rounded-xl cursor-pointer hover:bg-warm-subtle/50 transition">
+                <input type="radio" name="type" value="doubt" checked class="text-terracotta focus:ring-terracotta">
+                <span class="font-medium text-espresso">💡 Subject Doubt</span>
+              </label>
+              <label class="flex items-center space-x-2 p-2.5 border border-warm-border rounded-xl cursor-pointer hover:bg-warm-subtle/50 transition">
+                <input type="radio" name="type" value="project" class="text-terracotta focus:ring-terracotta">
+                <span class="font-medium text-espresso">📁 Project Review</span>
+              </label>
+              <label class="flex items-center space-x-2 p-2.5 border border-warm-border rounded-xl cursor-pointer hover:bg-warm-subtle/50 transition">
+                <input type="radio" name="type" value="assignment" class="text-terracotta focus:ring-terracotta">
+                <span class="font-medium text-espresso">📝 Assignment</span>
+              </label>
+              <label class="flex items-center space-x-2 p-2.5 border border-warm-border rounded-xl cursor-pointer hover:bg-warm-subtle/50 transition">
+                <input type="radio" name="type" value="other" class="text-terracotta focus:ring-terracotta">
+                <span class="font-medium text-espresso">💬 Other Inquiries</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div>
+            <label class="block text-xs font-bold text-espresso mb-1">Brief Description</label>
+            <textarea name="description" id="description" rows="2" placeholder="Briefly describe what you'd like to ask..."
+              class="w-full text-xs rounded-xl border border-warm-border p-3 bg-white text-espresso focus:ring-2 focus:ring-terracotta focus:outline-none">Need help understanding AVL tree rotations and balance factors.</textarea>
+          </div>
+
+          <!-- Date Window -->
+          <div class="border-t border-warm-border pt-3">
+            <h3 class="text-xs font-bold text-espresso mb-2">2. Preferred Date Window</h3>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] text-warm-muted mb-1">From Date</label>
+                <input type="date" name="from_date" value="{{ default_from }}" class="w-full text-xs rounded-xl border border-warm-border p-2.5 bg-white text-espresso focus:ring-2 focus:ring-terracotta">
+              </div>
+              <div>
+                <label class="block text-[11px] text-warm-muted mb-1">To Date</label>
+                <input type="date" name="to_date" value="{{ default_to }}" class="w-full text-xs rounded-xl border border-warm-border p-2.5 bg-white text-espresso focus:ring-2 focus:ring-terracotta">
+              </div>
+            </div>
+          </div>
+
+          <!-- Duration Selector -->
+          <div class="border-t border-warm-border pt-3">
+            <label class="block text-xs font-bold text-espresso mb-1.5">3. Meeting Duration</label>
+            <select name="duration" class="w-full text-xs rounded-xl border border-warm-border p-3 bg-white text-espresso focus:ring-2 focus:ring-terracotta focus:outline-none cursor-pointer">
+              <option value="5">5 minutes (Quick Doubt / Formula Check)</option>
+              <option value="10">10 minutes (Concept Query / Single Topic)</option>
+              <option value="15" selected>15 minutes (Standard Doubt Session)</option>
+              <option value="20">20 minutes</option>
+              <option value="25">25 minutes</option>
+              <option value="30">30 minutes (In-depth Review)</option>
+              <option value="45">45 minutes (Comprehensive Discussion)</option>
+              <option value="50">50 minutes (Full Period)</option>
+            </select>
+          </div>
+
+          <!-- HTMX Trigger Button with Glow & Lift -->
+          <div class="pt-2">
+            <button type="button"
+              hx-get="/student/slots-search"
+              hx-include="#booking-params"
+              hx-target="#slots-container"
+              hx-indicator="#loading-spinner"
+              class="w-full btn-terracotta btn-glow text-white font-bold text-sm py-3.5 px-6 rounded-full shadow-md flex items-center justify-center space-x-2 transition cursor-pointer">
+              <span>🔍 Find Matching Slots</span>
+            </button>
+          </div>
+
+        {% else %}
+          <div class="py-8 text-center text-warm-muted text-xs">
+            Please choose a professor above to see their consultation hours.
+          </div>
+        {% endif %}
+
+      </form>
+    </div>
+
+    <!-- Right Column: Ranked Slots Display (lg:col-span-7) -->
+    <div class="lg:col-span-7 space-y-4">
+      <div class="flex items-center justify-between border-b border-warm-border pb-2.5">
+        <h2 class="font-serif text-lg font-bold text-espresso">Available Consultation Slots</h2>
+        <div id="loading-spinner" class="htmx-indicator flex items-center space-x-2 text-terracotta text-xs font-medium">
+          <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+          <span>Finding availability intersection...</span>
+        </div>
+      </div>
+
+      <!-- Container injected by HTMX -->
+      <div id="slots-container" class="space-y-4">
+        {% if selected_faculty %}
+          <div class="bg-amberwarm-light rounded-3xl border border-amberwarm/30 p-8 text-center text-espresso">
+            <p class="text-3xl mb-2">⚡</p>
+            <p class="font-serif text-xl font-bold text-espresso">Ready to Find Time</p>
+            <p class="text-xs text-warm-muted mt-1 max-w-md mx-auto">
+              Click <strong>"Find Matching Slots"</strong> to cross-match your schedule with {{ selected_faculty.name }}'s availability.
+            </p>
+          </div>
+        {% else %}
+          <div class="bg-warm-surface rounded-3xl border border-warm-border p-12 text-center text-warm-muted">
+            <p class="text-4xl mb-3">📅</p>
+            <p class="font-serif text-lg font-bold text-espresso">No Professor Selected</p>
+            <p class="text-xs text-warm-muted mt-1">Select a faculty member from the form on the left to begin.</p>
+          </div>
+        {% endif %}
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

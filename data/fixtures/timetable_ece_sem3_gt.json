@@ -1,0 +1,20 @@
+{
+  "semester": 3,
+  "department": "Electronics & Communication Engineering",
+  "section": "ECE-A",
+  "confidence_score": 0.96,
+  "entries": [
+    {"day": "Day 1", "period": 1, "course_code": "EC201", "course_name": "Electronic Circuits", "room": "EC-LH-1", "section": "ECE-A", "is_lab": false},
+    {"day": "Day 1", "period": 3, "course_code": "EC203", "course_name": "Signals and Systems", "room": "EC-LH-1", "section": "ECE-A", "is_lab": false},
+    {"day": "Day 1", "period": 5, "course_code": "EC202", "course_name": "Analog Circuits Lab", "room": "EC-Lab-1", "section": "ECE-A", "is_lab": true},
+    {"day": "Day 1", "period": 6, "course_code": "EC202", "course_name": "Analog Circuits Lab", "room": "EC-Lab-1", "section": "ECE-A", "is_lab": true},
+    {"day": "Day 2", "period": 2, "course_code": "EC205", "course_name": "Electromagnetic Fields", "room": "EC-LH-1", "section": "ECE-A", "is_lab": false},
+    {"day": "Day 2", "period": 4, "course_code": "EC201", "course_name": "Electronic Circuits", "room": "EC-LH-1", "section": "ECE-A", "is_lab": false},
+    {"day": "Day 3", "period": 1, "course_code": "EC203", "course_name": "Signals and Systems", "room": "EC-LH-1", "section": "ECE-A", "is_lab": false},
+    {"day": "Day 3", "period": 3, "course_code": "EC205", "course_name": "Electromagnetic Fields", "room": "EC-LH-1", "section": "ECE-A", "is_lab": false},
+    {"day": "Day 4", "period": 2, "course_code": "EC201", "course_name": "Electronic Circuits", "room": "EC-LH-1", "section": "ECE-A", "is_lab": false},
+    {"day": "Day 4", "period": 5, "course_code": "EC204", "course_name": "Signals Simulation Lab", "room": "EC-Lab-3", "section": "ECE-A", "is_lab": true},
+    {"day": "Day 4", "period": 6, "course_code": "EC204", "course_name": "Signals Simulation Lab", "room": "EC-Lab-3", "section": "ECE-A", "is_lab": true},
+    {"day": "Day 5", "period": 3, "course_code": "EC203", "course_name": "Signals and Systems", "room": "EC-LH-1", "section": "ECE-A", "is_lab": false}
+  ]
+}

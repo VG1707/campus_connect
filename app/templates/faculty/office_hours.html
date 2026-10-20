@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Office Hours Editor{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-[#EADBCE] pb-4 gap-4">
+    <div>
+      <div class="flex items-center space-x-2">
+        <h1 class="font-serif text-3xl font-medium text-[#20120B]">Office Hour Commitments</h1>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F3EDE2] text-[#BA5624] border border-[#EADBCE]">Layer 2 Guaranteed</span>
+      </div>
+      <p class="text-xs text-[#7A695E] mt-1 font-sans">
+        Define your recurring consultation hours once. Students with matching free periods can book these slots instantly if auto-confirm is enabled.
+      </p>
+    </div>
+    <div>
+      <span class="inline-flex items-center text-xs px-3 py-1.5 rounded-full bg-white border border-[#EADBCE] text-[#5C4D44] font-medium shadow-sm">
+        👤 Faculty: <strong class="ml-1 text-[#20120B]">{{ current_user.name }}</strong>
+      </span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    
+    <!-- Left: Existing Office Hours List (lg:col-span-7) -->
+    <div class="lg:col-span-7 space-y-4">
+      <div class="flex items-center justify-between border-b border-[#EADBCE] pb-2">
+        <h2 class="font-serif text-xl font-medium text-[#20120B]">Your Active Published Hours</h2>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F3EDE2] text-[#BA5624] border border-[#EADBCE]">
+          {{ office_hours | length }} Active Windows
+        </span>
+      </div>
+
+      {% if office_hours %}
+        <div class="space-y-4">
+          {% for oh in office_hours %}
+            <div class="bg-white rounded-3xl border border-[#EADBCE] p-6 shadow-sm space-y-4 card-hover-lift">
+              <div class="flex items-start justify-between">
+                <div>
+                  <h3 class="font-serif text-lg font-medium text-[#20120B]">
+                    📅 {{ oh.recurrence_pattern.replace("day_order:", "Day Order: ").replace("weekday:", "") }}
+                  </h3>
+                  <p class="text-xs text-[#BA5624] font-semibold mt-0.5 font-sans">
+                    ⏰ {{ oh.start_time }} - {{ oh.end_time }} &bull; 📍 {{ oh.location }}
+                  </p>
+                </div>
+
+                <div class="flex items-center space-x-1">
+                  {% if oh.auto_confirm %}
+                    <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-semibold border border-emerald-200">
+                      ⚡ Instant Auto-Confirm
+                    </span>
+                  {% else %}
+                    <span class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 text-[11px] font-semibold border border-amber-200">
+                      ⏳ Manual Review
+                    </span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Capacity & Durations -->
+              <div class="grid grid-cols-2 gap-3 text-xs bg-[#FBF8F3] p-3 rounded-2xl border border-[#EADBCE]">
+                <div>
+                  <span class="text-[#7A695E]">Max Capacity:</span>
+                  <strong class="text-[#20120B] block mt-0.5">{{ oh.capacity }} student(s)</strong>
+                </div>
+                <div>
+                  <span class="text-[#7A695E]">Allowed Lengths:</span>
+                  <strong class="text-[#20120B] block mt-0.5">{{ oh.allowed_durations | join(', ') }} mins</strong>
+                </div>
+              </div>
+
+              <!-- Paused Dates -->
+              <div>
+                <p class="text-[11px] font-semibold text-[#7A695E] mb-1.5 uppercase tracking-wider">Paused Dates:</p>
+                {% if oh.paused_dates %}
+                  <div class="flex flex-wrap gap-1.5">
+                    {% for d in oh.paused_dates %}
+                      <span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 text-[10px] font-medium">
+                        ⛔ {{ d }}
+                      </span>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <p class="text-[11px] text-[#A69588] italic">None. Office hour runs every scheduled cycle.</p>
+                {% endif %}
+              </div>
+
+              <!-- Actions: Pause a date & Delete -->
+              <div class="flex items-center justify-between pt-3 border-t border-[#F3EDE2] text-xs">
+                
+                <!-- Pause a Date Form -->
+                <form method="POST" action="/faculty/office-hours/{{ oh.id }}/pause-date" class="flex items-center space-x-2">
+                  <input type="date" name="pause_date" value="2026-10-21" class="border border-[#EADBCE] bg-[#FBF8F3] rounded-xl px-2.5 py-1 text-xs text-[#20120B] focus:outline-none focus:border-[#BA5624]" required>
+                  <button type="submit" class="btn-secondary-warm btn-glow-subtle px-3 py-1 rounded-xl text-xs font-semibold text-[#BA5624]">
+                    Pause Date
+                  </button>
+                </form>
+
+                <!-- Delete -->
+                <form method="POST" action="/faculty/office-hours/{{ oh.id }}/delete" onsubmit="return confirm('Remove this recurring office hour?');">
+                  <button type="submit" class="text-xs text-red-600 hover:text-red-800 font-medium px-2 py-1 rounded-lg transition hover:bg-red-50">
+                    Remove
+                  </button>
+                </form>
+              </div>
+
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="bg-white rounded-3xl border border-[#EADBCE] p-10 text-center text-[#7A695E] text-xs space-y-2">
+          <p class="text-3xl">☕</p>
+          <p class="font-serif text-base font-medium text-[#20120B]">No office hours published yet</p>
+          <p class="text-[#7A695E]">You are currently in <strong>On-Demand Mode (Layer 1)</strong>. Use the form on the right to publish recurring hours.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Right: Add New Recurring Office Hour Form (lg:col-span-5) -->
+    <div class="lg:col-span-5 bg-white p-6 rounded-3xl border border-[#EADBCE] shadow-sm space-y-5">
+      <div class="border-b border-[#EADBCE] pb-3">
+        <span class="text-[11px] font-bold text-[#BA5624] uppercase tracking-wider">New Schedule</span>
+        <h2 class="font-serif text-xl font-medium text-[#20120B] mt-0.5">
+          + Publish Recurring Office Hour
+        </h2>
+      </div>
+
+      <form method="POST" action="/faculty/office-hours/add" class="space-y-4 text-xs">
+        
+        <!-- Recurrence Type -->
+        <div>
+          <label class="block font-semibold text-[#20120B] mb-1.5">Schedule Recurrence *</label>
+          <div class="grid grid-cols-2 gap-2">
+            <select name="recurrence_type" class="border border-[#EADBCE] bg-[#FBF8F3] rounded-xl p-2.5 text-xs text-[#20120B] focus:outline-none focus:border-[#BA5624]">
+              <option value="day_order" selected>Day Order Cycle</option>
+              <option value="weekday">Day of Week (Plain)</option>
+            </select>
+            <select name="day_val" class="border border-[#EADBCE] bg-[#FBF8F3] rounded-xl p-2.5 text-xs text-[#20120B] focus:outline-none focus:border-[#BA5624]">
+              <option value="Day 1">Day 1 / Monday</option>
+              <option value="Day 2">Day 2 / Tuesday</option>
+              <option value="Day 3" selected>Day 3 / Wednesday</option>
+              <option value="Day 4">Day 4 / Thursday</option>
+              <option value="Day 5">Day 5 / Friday</option>
+              <option value="Day 6">Day 6 / Saturday</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Start & End Time -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-[#20120B] mb-1.5">Start Time (HH:MM)</label>
+            <input type="time" name="start_time" value="14:00" class="w-full border border-[#EADBCE] bg-[#FBF8F3] rounded-xl p-2.5 text-xs text-[#20120B] focus:outline-none focus:border-[#BA5624]" required>
+          </div>
+          <div>
+            <label class="block font-semibold text-[#20120B] mb-1.5">End Time (HH:MM)</label>
+            <input type="time" name="end_time" value="15:00" class="w-full border border-[#EADBCE] bg-[#FBF8F3] rounded-xl p-2.5 text-xs text-[#20120B] focus:outline-none focus:border-[#BA5624]" required>
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div>
+          <label class="block font-semibold text-[#20120B] mb-1.5">Location *</label>
+          <input type="text" name="location" value="Cabin 304, Academic Block A" class="w-full border border-[#EADBCE] bg-[#FBF8F3] rounded-xl p-2.5 text-xs text-[#20120B] focus:outline-none focus:border-[#BA5624]" required>
+        </div>
+
+        <!-- Capacity -->
+        <div>
+          <label class="block font-semibold text-[#20120B] mb-1.5">Capacity (Max simultaneous students)</label>
+          <select name="capacity" class="w-full border border-[#EADBCE] bg-[#FBF8F3] rounded-xl p-2.5 text-xs text-[#20120B] focus:outline-none focus:border-[#BA5624]">
+            <option value="1">1 student (Private 1-on-1 Consultation)</option>
+            <option value="2">2 students</option>
+            <option value="3" selected>3 students (Recommended for Doubts)</option>
+            <option value="4">4 students</option>
+            <option value="5">5 students (Small Cohort)</option>
+          </select>
+        </div>
+
+        <!-- Allowed Durations -->
+        <div>
+          <label class="block font-semibold text-[#20120B] mb-1.5">Allowed Consultation Durations</label>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="flex items-center space-x-1.5 p-2 bg-[#FBF8F3] border border-[#EADBCE] rounded-xl cursor-pointer hover:border-[#BA5624] transition">
+              <input type="checkbox" name="durations" value="5" checked class="accent-[#BA5624]">
+              <span class="font-semibold text-[#20120B]">5 min</span>
+            </label>
+            <label class="flex items-center space-x-1.5 p-2 bg-[#FBF8F3] border border-[#EADBCE] rounded-xl cursor-pointer hover:border-[#BA5624] transition">
+              <input type="checkbox" name="durations" value="10" checked class="accent-[#BA5624]">
+              <span class="font-semibold text-[#20120B]">10 min</span>
+            </label>
+            <label class="flex items-center space-x-1.5 p-2 bg-[#FBF8F3] border border-[#EADBCE] rounded-xl cursor-pointer hover:border-[#BA5624] transition">
+              <input type="checkbox" name="durations" value="15" checked class="accent-[#BA5624]">
+              <span class="font-semibold text-[#20120B]">15 min</span>
+            </label>
+            <label class="flex items-center space-x-1.5 p-2 bg-[#FBF8F3] border border-[#EADBCE] rounded-xl cursor-pointer hover:border-[#BA5624] transition">
+              <input type="checkbox" name="durations" value="20" class="accent-[#BA5624]">
+              <span class="font-semibold text-[#20120B]">20 min</span>
+            </label>
+            <label class="flex items-center space-x-1.5 p-2 bg-[#FBF8F3] border border-[#EADBCE] rounded-xl cursor-pointer hover:border-[#BA5624] transition">
+              <input type="checkbox" name="durations" value="30" checked class="accent-[#BA5624]">
+              <span class="font-semibold text-[#20120B]">30 min</span>
+            </label>
+            <label class="flex items-center space-x-1.5 p-2 bg-[#FBF8F3] border border-[#EADBCE] rounded-xl cursor-pointer hover:border-[#BA5624] transition">
+              <input type="checkbox" name="durations" value="45" class="accent-[#BA5624]">
+              <span class="font-semibold text-[#20120B]">45 min</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Auto-Confirm Toggle -->
+        <div class="p-3.5 bg-[#FBF8F3] border border-[#EADBCE] rounded-2xl">
+          <label class="flex items-start space-x-2.5 cursor-pointer">
+            <input type="checkbox" name="auto_confirm" value="true" checked class="mt-0.5 accent-[#BA5624] rounded">
+            <div>
+              <span class="font-bold text-[#20120B] text-xs">Enable Instant Auto-Confirm</span>
+              <p class="text-[11px] text-[#7A695E] mt-0.5 leading-snug">
+                Student bookings within this office hour that fit your capacity will confirm automatically without waiting for manual inbox review.
+              </p>
+            </div>
+          </label>
+        </div>
+
+        <button type="submit" class="btn-terracotta btn-glow w-full py-3 px-4 rounded-full font-semibold text-xs tracking-wide">
+          Publish Office Hour &rarr;
+        </button>
+
+      </form>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

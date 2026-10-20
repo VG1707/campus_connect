@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}Faculty Inbox & Requests - CampusConnect{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-warm-border pb-4 gap-4">
+    <div>
+      <div class="flex items-center space-x-2">
+        <h1 class="font-serif text-3xl font-bold text-espresso">Faculty Consultation Inbox</h1>
+        <span class="badge-warm bg-amberwarm-light text-espresso border border-amberwarm/40 text-xs font-semibold">{{ current_user.name }}</span>
+      </div>
+      <p class="text-xs text-warm-muted mt-1">
+        Review student inquiries, accept or counter-propose consultation slots, host cohort doubt sessions, and record attendance.
+      </p>
+    </div>
+    
+    <div class="flex items-center space-x-2.5">
+      <a href="/faculty/schedule-change" class="btn-secondary-warm btn-glow-subtle text-xs font-semibold px-4 py-2.5 rounded-full shadow-sm">
+        📢 Report Timetable Change
+      </a>
+      <a href="/faculty/office-hours" class="btn-terracotta btn-glow text-white text-xs font-semibold px-5 py-2.5 rounded-full shadow-sm">
+        ⏰ Manage Office Hours
+      </a>
+    </div>
+  </div>
+
+  <!-- Suggested Group Consultations (Cohort Detection) -->
+  {% if suggested_display %}
+    <div class="space-y-4">
+      {% for item in suggested_display %}
+        {% set gs = item.gs %}
+        <div class="bg-gradient-to-r from-amberwarm-light via-[#FBF2E3] to-[#F5E6D3] border border-amberwarm/40 rounded-3xl p-6 sm:p-7 shadow-sm space-y-4">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+              <span class="text-3xl">👥</span>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h3 class="font-serif text-lg font-bold text-espresso">Suggested Cohort Group Consultation</h3>
+                  <span class="badge-warm bg-terracotta text-white text-[10px] font-bold">Smart Clustering</span>
+                </div>
+                <p class="text-xs text-warm-muted mt-0.5">
+                  <strong class="text-espresso">{{ item.members | length }} students</strong> share the doubt topic <strong class="text-terracotta">"{{ gs.topic_tag }}"</strong> and are all provably free in your office hour slot.
+                </p>
+              </div>
+            </div>
+            <div class="text-xs text-espresso font-semibold bg-white/90 border border-warm-border rounded-2xl px-4 py-2 shadow-sm shrink-0">
+              📅 {{ gs.occurrence_date }} &bull; ⏰ {{ gs.slot_start[11:16] }} - {{ gs.slot_end[11:16] }}
+            </div>
+          </div>
+
+          <div class="text-xs bg-white/95 rounded-2xl p-4 border border-warm-border flex flex-wrap items-center justify-between gap-3">
+            <div class="text-espresso">
+              <span class="font-bold">Students with Common Doubt:</span>
+              {% for name in item.members %}
+                <span class="inline-block bg-warm-subtle text-espresso rounded-lg px-2.5 py-1 text-[11px] mr-1.5 font-medium">{{ name }}</span>
+              {% endfor %}
+            </div>
+            <div class="flex items-center space-x-2">
+              <form method="POST" action="/faculty/group-sessions/{{ gs.id }}/host">
+                <button type="submit" class="btn-gold btn-glow-gold text-espresso text-xs font-bold px-5 py-2.5 rounded-full shadow-sm transition">
+                  ✓ Host Group Session (Auto-confirm All {{ item.members | length }})
+                </button>
+              </form>
+              <form method="POST" action="/faculty/group-sessions/{{ gs.id }}/decline">
+                <button type="submit" class="btn-secondary-warm btn-glow-subtle text-warm-muted text-xs font-semibold px-4 py-2.5 rounded-full transition">
+                  Decline (Keep 1:1)
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Section 1: Pending Consultation Requests (Awaiting Action) -->
+  <div class="bg-warm-surface rounded-3xl border border-warm-border p-7 shadow-sm space-y-5">
+    <div class="flex items-center justify-between border-b border-warm-border pb-3.5">
+      <div class="flex items-center space-x-2.5">
+        <span class="text-2xl">📩</span>
+        <h2 class="font-serif text-xl font-bold text-espresso">Pending Student Inquiries</h2>
+      </div>
+      <span class="badge-warm bg-amberwarm-light text-espresso border border-amberwarm/40 font-semibold text-xs">
+        {{ pending_list | length }} Needs Review
+      </span>
+    </div>
+
+    {% if pending_list %}
+      <div class="space-y-4">
+        {% for item in pending_list %}
+          {% set req = item.req %}
+          {% set s = item.student %}
+          {% set c = item.course %}
+          <div class="p-5 rounded-2xl border border-warm-border bg-warm-subtle/30 space-y-3.5 card-hover-lift">
+            
+            <!-- Student Header & Request Details -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+              <div>
+                <span class="font-serif font-bold text-espresso text-base">{{ s.name if s else 'Student' }}</span>
+                <span class="text-xs text-warm-muted">({{ s.department.split('&')[0].strip() if s else '' }} &bull; Sem {{ s.semester or 3 }})</span>
+                <span class="ml-2 badge-warm {% if req.source == 'office_hour' %}bg-emerald-100 text-emerald-900{% else %}bg-sky-100 text-sky-900{% endif %}">
+                  {{ req.source | replace('_', ' ') | capitalize }}
+                </span>
+                <span class="badge-warm bg-warm-subtle text-espresso text-[10px] ml-1 uppercase">
+                  {{ req.type }}
+                </span>
+              </div>
+              <div class="text-xs text-espresso font-semibold bg-white px-3 py-1.5 rounded-xl border border-warm-border">
+                📅 {{ req.slot_start[:10] }} at {{ req.slot_start[11:16] }} ({{ req.duration }} mins)
+              </div>
+            </div>
+
+            <!-- Topic & Description -->
+            <div class="text-xs bg-white p-3.5 rounded-xl border border-warm-border space-y-1">
+              <p class="font-bold text-terracotta">Topic: {{ req.topic_tag }} {% if c %}&bull; {{ c.code }} ({{ c.name }}){% endif %}</p>
+              <p class="text-warm-muted italic">"{{ req.description }}"</p>
+            </div>
+
+            <!-- Action Controls (Accept / Reject / Counter) -->
+            <div class="flex flex-wrap items-center justify-end gap-2.5 pt-2 border-t border-warm-border">
+              
+              <!-- Accept -->
+              <form method="POST" action="/faculty/requests/{{ req.id }}/accept">
+                <input type="hidden" name="location" value="Cabin 304, Academic Block A">
+                <button type="submit" class="btn-terracotta btn-glow text-white text-xs font-bold px-5 py-2.5 rounded-full shadow-sm transition">
+                  ✓ Accept Request
+                </button>
+              </form>
+
+              <!-- Counter-Proposal Trigger & Modal -->
+              <details class="relative">
+                <summary class="cursor-pointer btn-secondary-warm btn-glow-subtle text-espresso text-xs font-semibold px-4 py-2.5 rounded-full transition list-none">
+                  🔄 Counter-Propose Time
+                </summary>
+                <div class="absolute right-0 mt-2 w-80 bg-warm-surface border border-warm-border shadow-2xl rounded-2xl p-5 z-30 space-y-3 text-espresso">
+                  <h3 class="font-serif text-sm font-bold text-espresso border-b border-warm-border pb-1.5">Suggest Alternate Time</h3>
+                  <form method="POST" action="/faculty/requests/{{ req.id }}/counter" class="space-y-2.5 text-xs">
+                    <div>
+                      <label class="block text-[11px] text-warm-muted mb-0.5 font-medium">Alternate Date</label>
+                      <input type="date" name="new_date" value="{{ req.slot_start[:10] }}" class="w-full border border-warm-border rounded-xl p-2 text-xs bg-white" required>
+                    </div>
+                    <div>
+                      <label class="block text-[11px] text-warm-muted mb-0.5 font-medium">Start Time (HH:MM)</label>
+                      <input type="time" name="new_time" value="15:00" class="w-full border border-warm-border rounded-xl p-2 text-xs bg-white" required>
+                    </div>
+                    <div>
+                      <label class="block text-[11px] text-warm-muted mb-0.5 font-medium">Duration (mins)</label>
+                      <input type="number" name="duration" value="{{ req.duration }}" min="5" max="50" step="5" class="w-full border border-warm-border rounded-xl p-2 text-xs bg-white">
+                    </div>
+                    <div>
+                      <label class="block text-[11px] text-warm-muted mb-0.5 font-medium">Faculty Cabin / Location</label>
+                      <input type="text" name="location" value="Cabin 304" class="w-full border border-warm-border rounded-xl p-2 text-xs bg-white">
+                    </div>
+                    <div>
+                      <label class="block text-[11px] text-warm-muted mb-0.5 font-medium">Note for Student</label>
+                      <input type="text" name="note" placeholder="e.g. Free after 3 PM" class="w-full border border-warm-border rounded-xl p-2 text-xs bg-white">
+                    </div>
+                    <button type="submit" class="w-full btn-terracotta btn-glow text-white font-bold py-2.5 rounded-full shadow-sm transition">
+                      Send Counter-Proposal &rarr;
+                    </button>
+                  </form>
+                </div>
+              </details>
+
+              <!-- Decline -->
+              <form method="POST" action="/faculty/requests/{{ req.id }}/reject" onsubmit="return confirm('Decline this student inquiry?');">
+                <input type="hidden" name="reason" value="Faculty unavailable at requested time.">
+                <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold px-3.5 py-2.5 rounded-full border border-red-200 transition">
+                  ✗ Decline
+                </button>
+              </form>
+
+            </div>
+
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-xs text-warm-muted py-6 text-center italic">No pending student inquiries at this time.</p>
+    {% endif %}
+  </div>
+
+  <!-- Section 2: Upcoming Confirmed Consultations -->
+  <div class="bg-warm-surface rounded-3xl border border-warm-border p-7 shadow-sm space-y-5">
+    <div class="flex items-center justify-between border-b border-warm-border pb-3.5">
+      <div class="flex items-center space-x-2.5">
+        <span class="text-2xl">📅</span>
+        <h2 class="font-serif text-xl font-bold text-espresso">Confirmed Consultations Schedule</h2>
+      </div>
+      <span class="badge-warm bg-emerald-100 text-emerald-900 border border-emerald-200 font-semibold text-xs">
+        {{ confirmed_list | length }} Confirmed
+      </span>
+    </div>
+
+    {% if confirmed_list %}
+      <div class="divide-y divide-warm-border">
+        {% for item in confirmed_list %}
+          {% set req = item.req %}
+          {% set s = item.student %}
+          <div class="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 card-hover-lift rounded-2xl p-3">
+            <div>
+              <div class="flex items-center space-x-2">
+                <p class="font-serif text-base font-bold text-espresso">{{ req.topic_tag }}</p>
+                {% if req.group_session_id %}
+                  <span class="badge-warm bg-amberwarm-light text-espresso border border-amberwarm/40 text-[10px]">Cohort Group Session</span>
+                {% endif %}
+              </div>
+              <p class="text-xs text-warm-muted mt-0.5">
+                Student: <strong class="text-espresso">{{ s.name if s else 'Student' }}</strong> &bull; {{ s.department if s else '' }} ({{ s.email if s else '' }})
+              </p>
+              <p class="text-xs text-espresso font-medium mt-1">
+                ⏰ <strong>{{ req.slot_start[:10] }}</strong> at <strong>{{ req.slot_start[11:16] }} &ndash; {{ req.slot_end[11:16] }}</strong> ({{ req.duration }} mins) &bull; 📍 {{ req.location or 'Faculty Cabin' }}
+              </p>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="flex items-center space-x-2 shrink-0">
+              <form method="POST" action="/faculty/meetings/{{ req.id }}/complete">
+                <button type="submit" class="btn-secondary-warm btn-glow-subtle text-xs font-semibold px-4 py-2 rounded-full transition shadow-sm">
+                  ✓ Completed
+                </button>
+              </form>
+              <form method="POST" action="/faculty/meetings/{{ req.id }}/no-show" onsubmit="return confirm('Mark student as No-Show? (2 no-shows automatically blocks student bookings)');">
+                <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold px-3.5 py-2 rounded-full border border-red-200 transition">
+                  ⚠️ No-Show
+                </button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-xs text-warm-muted py-6 text-center italic">No confirmed meetings scheduled yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Faculty Teaching Timetable{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-[#EADBCE] pb-4 gap-4">
+    <div>
+      <div class="flex items-center space-x-2">
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F3EDE2] text-[#BA5624] border border-[#EADBCE]">Faculty Schedule</span>
+        <span class="text-xs text-[#A69588]">&bull;</span>
+        <span class="text-xs text-[#7A695E]">{{ current_user.name }} ({{ current_user.department }})</span>
+      </div>
+      <h1 class="font-serif text-3xl font-medium text-[#20120B] mt-1">My Weekly Teaching Schedule</h1>
+      <p class="text-xs text-[#7A695E] mt-0.5 font-sans">
+        Upload your teaching periods via Excel, CSV, or screenshot. Non-teaching gaps are automatically detected as <strong>Likely Free (Layer 1)</strong> slots for student doubt inquiries.
+      </p>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex flex-wrap items-center gap-2">
+      <a href="/faculty/timetable/upload" class="btn-terracotta btn-glow font-semibold text-xs px-4 py-2 rounded-full shadow-sm flex items-center space-x-1.5">
+        <span>📤</span>
+        <span>Upload / Replace Timetable</span>
+      </a>
+
+      <a href="/faculty/timetable/sample-csv" class="btn-secondary-warm btn-glow-subtle font-semibold text-xs px-3.5 py-2 rounded-full shadow-sm flex items-center space-x-1" title="Download sample CSV to edit in Excel">
+        <span>📊</span>
+        <span>Sample CSV</span>
+      </a>
+
+      {% if has_timetable %}
+        <form method="POST" action="/faculty/timetable/clear" onsubmit="return confirm('Clear your teaching timetable? This will remove regular class clash filtering.')" class="m-0">
+          <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-semibold text-xs px-3 py-2 rounded-full transition">
+            Clear
+          </button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Availability Legend -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-4 rounded-3xl border border-[#EADBCE] text-xs shadow-sm">
+    <div class="flex items-center space-x-2.5">
+      <div class="w-3.5 h-3.5 rounded-lg bg-[#311C14] shrink-0"></div>
+      <div>
+        <span class="font-bold text-[#20120B]">Teaching Period (Busy)</span>
+        <p class="text-[10px] text-[#7A695E] leading-tight">Class/lab in session. Clashing student consultations are strictly blocked.</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-2.5">
+      <div class="w-3.5 h-3.5 rounded-lg bg-[#F4B342] shrink-0"></div>
+      <div>
+        <span class="font-bold text-[#20120B]">Published Office Hour (Layer 2)</span>
+        <p class="text-[10px] text-[#7A695E] leading-tight">Dedicated consultation window with auto-confirm and capacity controls.</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-2.5">
+      <div class="w-3.5 h-3.5 rounded-lg bg-emerald-500 shrink-0"></div>
+      <div>
+        <span class="font-bold text-[#20120B]">Likely Free (Layer 1 On-Demand)</span>
+        <p class="text-[10px] text-[#7A695E] leading-tight">No scheduled class. Students can propose on-demand meetings subject to your inbox review.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weekly Timetable Matrix -->
+  <div class="bg-white rounded-3xl border border-[#EADBCE] shadow-sm overflow-hidden">
+    <div class="p-4 bg-[#FBF8F3] border-b border-[#EADBCE] flex items-center justify-between">
+      <span class="text-xs font-bold uppercase tracking-wider text-[#7A695E]">
+        8-Period Standard College Cycle (Days 1 &ndash; 6)
+      </span>
+      <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#F3EDE2] text-[#BA5624] border border-[#EADBCE]">
+        {{ total_entries }} Teaching Periods Active
+      </span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-center border-collapse text-xs">
+        <thead>
+          <tr class="bg-[#F3EDE2] text-[#20120B] border-b border-[#EADBCE]">
+            <th class="p-3 text-left font-bold w-24">Cycle Day</th>
+            {% for p_num, timing in periods.items() %}
+              <th class="p-2.5 font-bold border-l border-[#EADBCE]">
+                <div>P{{ p_num }}</div>
+                <div class="text-[10px] font-normal text-[#7A695E]">{{ timing[0] }}-{{ timing[1] }}</div>
+              </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#EADBCE]">
+          {% for day in days %}
+            <tr class="hover:bg-[#FBF8F3] transition">
+              <!-- Day Header -->
+              <td class="p-3 text-left font-bold text-[#20120B] bg-[#F8EFE4] border-r border-[#EADBCE]">
+                {{ day }}
+              </td>
+
+              <!-- Periods 1..8 -->
+              {% for p in range(1, 9) %}
+                {% set cell = grid[day][p] %}
+                <td class="p-2 border-l border-[#EADBCE] align-top h-20">
+                  {% if cell and cell.entry %}
+                    <!-- Teaching Class -->
+                    <div class="h-full bg-[#311C14] text-white rounded-2xl p-2 text-left flex flex-col justify-between shadow-sm">
+                      <div>
+                        <span class="font-bold text-[#F8C86A] block text-[11px]">
+                          {{ cell.course.code if cell.course else cell.entry.course_id or "CLASS" }}
+                        </span>
+                        <span class="text-[10px] text-white/80 truncate block mt-0.5" title="{{ cell.course.name if cell.course else '' }}">
+                          {{ cell.course.name if cell.course else "Teaching" }}
+                        </span>
+                      </div>
+                      <div class="flex items-center justify-between text-[9px] text-[#EADBCE] mt-1">
+                        <span>📍 {{ cell.entry.room }}</span>
+                        {% if cell.entry.is_lab_block %}
+                          <span class="bg-[#BA5624] text-white px-1 rounded font-bold">LAB</span>
+                        {% endif %}
+                      </div>
+                    </div>
+                  {% elif cell and cell.office_hour %}
+                    <!-- Office Hour -->
+                    <div class="h-full bg-[#FAF0D7] border border-[#F4B342] rounded-2xl p-2 text-left flex flex-col justify-between">
+                      <div>
+                        <span class="font-bold text-[#9C4318] block text-[11px]">Office Hour</span>
+                        <span class="text-[10px] text-[#5C4D44] truncate block mt-0.5">
+                          {{ cell.office_hour.start_time }}-{{ cell.office_hour.end_time }}
+                        </span>
+                      </div>
+                      <div class="text-[9px] text-[#7A695E]">
+                        📍 {{ cell.office_hour.location }}
+                      </div>
+                    </div>
+                  {% else %}
+                    <!-- Free Period (Layer 1) -->
+                    <div class="h-full bg-emerald-50/40 border border-dashed border-emerald-300 rounded-2xl p-2 text-left flex flex-col justify-between">
+                      <span class="text-[10px] font-semibold text-emerald-800 block">Free</span>
+                      <span class="text-[9px] text-emerald-600 block mt-auto">Available for inquiry</span>
+                    </div>
+                  {% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

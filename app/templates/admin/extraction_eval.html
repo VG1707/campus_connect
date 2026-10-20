@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Extraction Accuracy Evaluation{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-[#EADBCE] pb-4 gap-4">
+    <div>
+      <div class="flex items-center space-x-2">
+        <a href="/admin" class="text-xs font-semibold text-[#BA5624] hover:text-[#9C4318] transition">&larr; Back to Admin Panel</a>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F3EDE2] text-[#BA5624] border border-[#EADBCE]">Benchmark Evaluation</span>
+      </div>
+      <h1 class="font-serif text-3xl font-medium text-[#20120B] mt-1">Timetable Extraction Evaluation</h1>
+      <p class="text-xs text-[#7A695E] mt-0.5 font-sans">
+        Automated benchmark comparing extracted timetables against hand-written ground-truth JSON fixtures.
+      </p>
+    </div>
+
+    <!-- Re-run Benchmark button -->
+    <a href="/admin/extraction-eval" class="btn-secondary-warm btn-glow-subtle text-xs font-semibold px-4 py-2 rounded-full transition shadow-sm">
+      🔄 Re-run Benchmark
+    </a>
+  </div>
+
+  <!-- Summary KPI Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white p-6 rounded-3xl border border-[#EADBCE] shadow-sm card-hover-lift">
+      <p class="text-[11px] font-bold uppercase tracking-wider text-[#7A695E]">Overall Cell Accuracy</p>
+      <p class="font-serif text-3xl font-medium text-emerald-700 mt-1">{{ benchmark.overall_accuracy }}%</p>
+      <p class="text-[11px] text-[#A69588] mt-1">{{ benchmark.total_matched_cells }} of {{ benchmark.total_expected_cells }} cells matched</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-3xl border border-[#EADBCE] shadow-sm card-hover-lift">
+      <p class="text-[11px] font-bold uppercase tracking-wider text-[#7A695E]">Test Fixtures Evaluated</p>
+      <p class="font-serif text-3xl font-medium text-[#20120B] mt-1">{{ benchmark.fixtures_count }}</p>
+      <p class="text-[11px] text-[#A69588] mt-1">CSE, ECE & MECH schedules</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-3xl border border-[#EADBCE] shadow-sm card-hover-lift">
+      <p class="text-[11px] font-bold uppercase tracking-wider text-[#7A695E]">Avg Cells Corrected</p>
+      <p class="font-serif text-3xl font-medium text-[#BA5624] mt-1">{{ avg_cells_edited }}</p>
+      <p class="text-[11px] text-[#A69588] mt-1">Logged on human review screen</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-3xl border border-[#EADBCE] shadow-sm card-hover-lift">
+      <p class="text-[11px] font-bold uppercase tracking-wider text-[#7A695E]">Avg Review Time</p>
+      <p class="font-serif text-3xl font-medium text-[#20120B] mt-1">{{ avg_seconds_to_save }}s</p>
+      <p class="text-[11px] text-[#A69588] mt-1">From extraction to confirmation</p>
+    </div>
+  </div>
+
+  <!-- Per-Fixture Accuracy Table -->
+  <div class="bg-white rounded-3xl border border-[#EADBCE] shadow-sm overflow-hidden space-y-4">
+    <div class="p-5 border-b border-[#F3EDE2] flex items-center justify-between">
+      <h2 class="font-serif text-lg font-medium text-[#20120B]">Per-Image Accuracy Breakdown</h2>
+      <span class="text-xs text-[#7A695E] font-medium">Deterministic Offline Evaluation</span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="bg-[#F3EDE2] text-[#20120B] border-b border-[#EADBCE]">
+            <th class="p-3 font-semibold">Fixture Filename</th>
+            <th class="p-3 font-semibold">Department & Semester</th>
+            <th class="p-3 font-semibold text-center">Expected Cells</th>
+            <th class="p-3 font-semibold text-center">Extracted Cells</th>
+            <th class="p-3 font-semibold text-center">Matched Cells</th>
+            <th class="p-3 font-semibold text-right">Cell Accuracy</th>
+            <th class="p-3 font-semibold text-right">Image Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#F3EDE2]">
+          {% for r in benchmark.per_fixture_results %}
+            <tr class="hover:bg-[#FBF8F3] transition">
+              <td class="p-3 font-mono font-bold text-[#20120B]">{{ r.fixture_name }}</td>
+              <td class="p-3 text-[#7A695E]">{{ r.department }} &bull; Sem {{ r.semester }}</td>
+              <td class="p-3 text-center text-[#7A695E]">{{ r.total_expected_cells }}</td>
+              <td class="p-3 text-center text-[#7A695E]">{{ r.total_extracted_cells }}</td>
+              <td class="p-3 text-center font-bold text-[#20120B]">{{ r.matched_cells }}</td>
+              <td class="p-3 text-right font-extrabold {% if r.cell_accuracy >= 95 %}text-emerald-700{% else %}text-amber-700{% endif %}">
+                {{ r.cell_accuracy }}%
+              </td>
+              <td class="p-3 text-right">
+                {% if r.image_accuracy == 100 %}
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">Perfect 100%</span>
+                {% else %}
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">{{ r.mismatches | length }} Diff(s)</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Mismatches List Section (if any) -->
+  <div class="bg-white rounded-3xl border border-[#EADBCE] p-6 shadow-sm space-y-4">
+    <h2 class="font-serif text-lg font-medium text-[#20120B] border-b border-[#F3EDE2] pb-2">Mismatch Inspection & Diff Log</h2>
+    {% if benchmark.mismatches %}
+      <div class="divide-y divide-[#F3EDE2] text-xs">
+        {% for m in benchmark.mismatches %}
+          <div class="py-3 flex items-start justify-between">
+            <div>
+              <p class="font-bold text-[#20120B]">[{{ m.fixture_name }}] Cell: {{ m.cell_key }}</p>
+              <p class="text-[#7A695E] mt-0.5">Issue: {{ m.issue }}</p>
+            </div>
+            <div class="text-right">
+              <span class="text-red-600 font-mono">Expected: {{ m.expected }}</span>
+              <span class="mx-2 text-[#A69588]">&bull;</span>
+              <span class="text-emerald-700 font-mono">Got: {{ m.extracted }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="py-6 text-center text-emerald-800 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs font-semibold">
+        ✓ 100% Precision: Zero cell mismatches across all 4 sample engineering timetable fixtures.
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

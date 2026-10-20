@@ -1,0 +1,162 @@
+<!-- HTMX Partial: Ranked Consultation Slots -->
+
+{% if error_message %}
+  <div class="bg-red-50 border border-red-200 rounded-2xl p-5 text-red-800 text-xs font-medium">
+    ⚠️ <strong>Unable to search slots:</strong> {{ error_message }}
+  </div>
+{% elif not matched_slots %}
+  <div class="bg-amberwarm-light border border-amberwarm/40 rounded-3xl p-8 text-center text-espresso">
+    <p class="text-3xl mb-2">🔍</p>
+    <p class="font-serif text-lg font-bold text-espresso">No Matching Slots Found in Selected Window</p>
+    <p class="text-xs text-warm-muted mt-1 max-w-md mx-auto">
+      All consultation hours in this window either overlap with your scheduled classes, are fully booked, or fall on a holiday.
+    </p>
+    <p class="text-[11px] text-terracotta font-semibold mt-3">
+      Tip: Try expanding the date window or choosing a 5-minute or 15-minute duration.
+    </p>
+  </div>
+{% else %}
+
+  <!-- Active Algorithm Mode Banner -->
+  {% set first_slot = matched_slots[0] %}
+  <div class="p-3.5 rounded-2xl border text-xs flex items-center justify-between
+    {% if first_slot.is_manual_mode %}bg-amberwarm-light text-espresso border-amberwarm/40{% else %}bg-emerald-50 text-emerald-900 border-emerald-200{% endif %}">
+    <div class="flex items-center space-x-2">
+      <span>{% if first_slot.is_manual_mode %}🟡{% else %}🟢{% endif %}</span>
+      <span class="font-bold">
+        {% if first_slot.is_manual_mode %}
+          Manual Selection Mode: No timetable uploaded. Showing all published office hours.
+        {% else %}
+          Smart Match Active: Conflicts filtered against your timetable and lab blocks.
+        {% endif %}
+      </span>
+    </div>
+    <span class="text-[11px] font-semibold text-warm-muted">{{ matched_slots | length }} slots evaluated</span>
+  </div>
+
+  <!-- List of Ranked Slots -->
+  <div class="space-y-4">
+    {% for slot in matched_slots %}
+      <div class="bg-warm-surface rounded-3xl border 
+        {% if loop.first %}border-terracotta shadow-md ring-2 ring-amberwarm/30{% else %}border-warm-border shadow-sm{% endif %}
+        p-6 card-hover-lift">
+        
+        <!-- Header: Rank, Score & Layer Badge -->
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-warm-border pb-3.5">
+          <div class="flex items-center space-x-2.5">
+            <span class="badge-warm {% if loop.first %}bg-terracotta text-white shadow-sm{% else %}bg-warm-subtle text-espresso border border-warm-border{% endif %}">
+              Rank #{{ loop.index }}
+            </span>
+            <span class="text-xs font-semibold text-warm-muted">
+              Score: <strong class="text-espresso font-serif text-sm">{{ slot.score }}/100</strong>
+            </span>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <!-- Three-Layer Availability Badge -->
+            {% if slot.source == 'office_hour' %}
+              <span class="badge-warm bg-emerald-100 text-emerald-900 border border-emerald-200">
+                ⚡ Layer 2: Recurring Office Hour
+              </span>
+            {% else %}
+              <span class="badge-warm bg-sky-100 text-sky-900 border border-sky-200">
+                ⏳ Layer 1: Timetable Prediction (On-Demand)
+              </span>
+            {% endif %}
+
+            <!-- Auto-Confirm Status Badge -->
+            {% if slot.can_auto_confirm %}
+              <span class="badge-warm bg-emerald-50 text-emerald-800 border border-emerald-200">
+                Instant Confirmation
+              </span>
+            {% else %}
+              <span class="badge-warm bg-amberwarm-light text-espresso border border-amberwarm/40">
+                Requires Approval
+              </span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Unverified Change Warning Banner (if any) -->
+        {% if slot.has_unverified_change %}
+          <div class="mt-3 p-3 bg-amberwarm-light border border-amberwarm/40 rounded-xl text-xs text-espresso flex items-start space-x-2">
+            <span>⚠️</span>
+            <span>{{ slot.unverified_change_warning }}</span>
+          </div>
+        {% endif %}
+
+        <!-- Time & Location Details -->
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div>
+            <p class="font-serif font-bold text-espresso text-base">
+              📅 {{ slot.slot_start.strftime("%A, %d %b %Y") }}
+            </p>
+            <p class="text-warm-muted font-medium mt-0.5">
+              ⏰ {{ slot.slot_start.strftime("%H:%M") }} &ndash; {{ slot.slot_end.strftime("%H:%M") }} ({{ slot.duration_minutes }} mins)
+            </p>
+          </div>
+          <div class="sm:text-right">
+            <p class="text-espresso font-semibold">
+              📍 {{ slot.location }}
+            </p>
+            <p class="text-[11px] text-warm-muted mt-0.5">
+              Seats Available: <strong class="text-espresso">{{ slot.remaining_capacity }} of {{ slot.capacity }}</strong>
+            </p>
+          </div>
+        </div>
+
+        <!-- Transparent Match Reason -->
+        <div class="mt-3.5 p-3 bg-warm-subtle/50 rounded-2xl border border-warm-border text-xs text-warm-muted leading-relaxed">
+          <strong class="text-terracotta">💡 Match Rationale:</strong>
+          {{ slot.ranking_reason }}
+        </div>
+
+        <!-- Confirm Action Form -->
+        <form method="POST" action="/student/book" class="mt-4 pt-3.5 border-t border-warm-border flex items-center justify-between">
+          <input type="hidden" name="faculty_id" value="{{ slot.faculty_id }}">
+          <input type="hidden" name="slot_start" value="{{ slot.slot_start.isoformat() }}">
+          <input type="hidden" name="slot_end" value="{{ slot.slot_end.isoformat() }}">
+          <input type="hidden" name="duration" value="{{ slot.duration_minutes }}">
+          <input type="hidden" name="source" value="{{ slot.source }}">
+          <input type="hidden" name="location" value="{{ slot.location }}">
+          
+          <input type="hidden" name="course_id" id="post_course_id_{{ loop.index }}" value="">
+          <input type="hidden" name="topic_tag" id="post_topic_tag_{{ loop.index }}" value="">
+          <input type="hidden" name="type" id="post_type_{{ loop.index }}" value="doubt">
+          <input type="hidden" name="description" id="post_desc_{{ loop.index }}" value="">
+
+          <script>
+            (function() {
+              const idx = "{{ loop.index }}";
+              const c = document.getElementById('course_id');
+              const t = document.getElementById('topic_tag');
+              const d = document.getElementById('description');
+              const r = document.querySelector('input[name="type"]:checked');
+              if (c) document.getElementById('post_course_id_' + idx).value = c.value;
+              if (t) document.getElementById('post_topic_tag_' + idx).value = t.value;
+              if (d) document.getElementById('post_desc_' + idx).value = d.value;
+              if (r) document.getElementById('post_type_' + idx).value = r.value;
+            })();
+          </script>
+
+          <span class="text-[11px] text-warm-muted">
+            {% if slot.can_auto_confirm %}
+              ⚡ Confirms instantly upon click
+            {% else %}
+              ⏳ Sent to professor for inbox approval
+            {% endif %}
+          </span>
+
+          <button type="submit"
+            {% if current_user.is_blocked %}disabled{% endif %}
+            class="btn-terracotta btn-glow disabled:opacity-50 text-white font-bold text-xs py-2.5 px-6 rounded-full shadow-sm flex items-center space-x-1.5 cursor-pointer">
+            <span>Confirm Booking</span>
+            <span>&rarr;</span>
+          </button>
+        </form>
+
+      </div>
+    {% endfor %}
+  </div>
+
+{% endif %}

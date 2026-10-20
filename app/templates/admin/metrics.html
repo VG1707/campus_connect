@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}System Metrics & Operations Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-[#EADBCE] pb-4 gap-4">
+    <div>
+      <div class="flex items-center space-x-2">
+        <a href="/admin" class="text-xs font-semibold text-[#BA5624] hover:text-[#9C4318] transition">&larr; Back to Admin Panel</a>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">Analytics & Operations</span>
+      </div>
+      <h1 class="font-serif text-3xl font-medium text-[#20120B] mt-1">Operational Metrics & Performance</h1>
+      <p class="text-xs text-[#7A695E] mt-0.5 font-sans">
+        Live telemetry evaluating scheduling velocity, consultation outcomes, faculty workload, and OCR accuracy.
+      </p>
+    </div>
+
+    <a href="/admin/metrics" class="btn-secondary-warm btn-glow-subtle text-xs font-semibold px-4 py-2 rounded-full transition shadow-sm">
+      🔄 Refresh Telemetry
+    </a>
+  </div>
+
+  <!-- Primary KPI Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white p-6 rounded-3xl border border-[#EADBCE] shadow-sm card-hover-lift">
+      <p class="text-[11px] font-bold uppercase tracking-wider text-[#7A695E]">Acceptance Rate</p>
+      <p class="font-serif text-3xl font-medium text-emerald-700 mt-1">{{ acceptance_rate }}%</p>
+      <p class="text-[11px] text-[#A69588] mt-1">{{ confirmed_count }} accepted of {{ resolved_count }} resolved</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-3xl border border-[#EADBCE] shadow-sm card-hover-lift">
+      <p class="text-[11px] font-bold uppercase tracking-wider text-[#7A695E]">Median Confirmation Time</p>
+      <p class="font-serif text-3xl font-medium text-[#BA5624] mt-1">{{ median_confirm_time }}m</p>
+      <p class="text-[11px] text-[#A69588] mt-1">Sub-minute for instant office hours</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-3xl border border-[#EADBCE] shadow-sm card-hover-lift">
+      <p class="text-[11px] font-bold uppercase tracking-wider text-[#7A695E]">Completion Rate</p>
+      <p class="font-serif text-3xl font-medium text-[#20120B] mt-1">{{ completion_rate }}%</p>
+      <p class="text-[11px] text-[#A69588] mt-1">{{ completed_count }} completed consultations</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-3xl border border-[#EADBCE] shadow-sm card-hover-lift">
+      <p class="text-[11px] font-bold uppercase tracking-wider text-[#7A695E]">No-Show Accountability</p>
+      <p class="font-serif text-3xl font-medium {% if no_show_rate > 15 %}text-red-600{% else %}text-[#20120B]{% endif %} mt-1">{{ no_show_rate }}%</p>
+      <p class="text-[11px] text-[#A69588] mt-1">{{ no_show_count }} total recorded absences</p>
+    </div>
+  </div>
+
+  <!-- Secondary Metrics Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- Faculty Workload Distribution (lg:col-span-7) -->
+    <div class="lg:col-span-7 bg-white rounded-3xl border border-[#EADBCE] shadow-sm overflow-hidden space-y-4">
+      <div class="p-5 border-b border-[#F3EDE2] flex items-center justify-between">
+        <h2 class="font-serif text-lg font-medium text-[#20120B]">Faculty Consultation Workload</h2>
+        <span class="text-xs text-[#7A695E] font-medium">Demanded Hours vs Completed</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-[#F3EDE2] text-[#20120B] border-b border-[#EADBCE]">
+              <th class="p-3 font-semibold">Faculty Name</th>
+              <th class="p-3 font-semibold">Department</th>
+              <th class="p-3 font-semibold text-center">Total Inquiries</th>
+              <th class="p-3 font-semibold text-center">Confirmed</th>
+              <th class="p-3 font-semibold text-center">Completed</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#F3EDE2]">
+            {% for f in faculty_metrics %}
+              <tr class="hover:bg-[#FBF8F3] transition">
+                <td class="p-3 font-bold text-[#20120B]">{{ f.name }}</td>
+                <td class="p-3 text-[#7A695E]">{{ f.department }}</td>
+                <td class="p-3 text-center font-bold text-[#20120B]">{{ f.total_inquiries }}</td>
+                <td class="p-3 text-center text-emerald-700 font-bold">{{ f.confirmed }}</td>
+                <td class="p-3 text-center text-[#BA5624] font-bold">{{ f.completed }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Cohort Group Sessions & Extraction Telemetry (lg:col-span-5) -->
+    <div class="lg:col-span-5 space-y-6">
+
+      <!-- Cohort Group Session Fill Rate -->
+      <div class="bg-white rounded-3xl border border-[#EADBCE] p-6 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-[#F3EDE2] pb-2">
+          <h2 class="font-serif text-base font-medium text-[#20120B]">Cohort Group Sessions</h2>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FAF0D7] text-[#9C4318] border border-[#F4B342]">Batch Efficiency</span>
+        </div>
+        <div class="space-y-3 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[#7A695E]">Total Group Sessions Hosted</span>
+            <span class="font-bold text-[#20120B]">{{ hosted_groups_count }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[#7A695E]">Total Seats Utilized</span>
+            <span class="font-bold text-[#20120B]">{{ filled_group_seats }} / {{ total_group_seats }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[#7A695E]">Seat Fill Rate</span>
+            <span class="font-bold text-[#BA5624]">{{ group_fill_rate }}%</span>
+          </div>
+          <!-- Progress bar -->
+          <div class="w-full bg-[#F3EDE2] rounded-full h-2 overflow-hidden mt-1">
+            <div class="bg-[#BA5624] h-2 rounded-full" style="width: {{ group_fill_rate }}%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Human-in-the-Loop Extraction Stats -->
+      <div class="bg-white rounded-3xl border border-[#EADBCE] p-6 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-[#F3EDE2] pb-2">
+          <h2 class="font-serif text-base font-medium text-[#20120B]">OCR Review Screen Metrics</h2>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F3EDE2] text-[#BA5624] border border-[#EADBCE]">Human-in-the-Loop</span>
+        </div>
+        <div class="space-y-3 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[#7A695E]">Total Timetables Extracted</span>
+            <span class="font-bold text-[#20120B]">{{ extraction_total }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[#7A695E]">Avg Periods Extracted</span>
+            <span class="font-bold text-[#20120B]">{{ avg_cells_extracted }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[#7A695E]">Avg Human Edits per Upload</span>
+            <span class="font-bold text-[#BA5624]">{{ avg_cells_edited }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[#7A695E]">Avg Verification Speed</span>
+            <span class="font-bold text-emerald-700">{{ avg_review_seconds }}s</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

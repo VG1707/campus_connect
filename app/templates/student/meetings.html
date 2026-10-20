@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}My Meetings{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-[#EADBCE] pb-4 gap-4">
+    <div>
+      <h1 class="font-serif text-3xl font-medium text-[#20120B]">My Consultations</h1>
+      <p class="text-xs text-[#7A695E] mt-1 font-sans">
+        Track your scheduled meetings, review pending inquiries, and respond to faculty counter-proposals.
+      </p>
+    </div>
+    <a href="/student/book" class="btn-terracotta btn-glow inline-flex items-center space-x-1.5 text-xs font-semibold px-4 py-2.5 rounded-full shadow-sm">
+      <span>+ Book New Consultation</span>
+    </a>
+  </div>
+
+  <!-- Section 1: Counter-Proposals (Needs Attention) -->
+  {% if countered %}
+    <div class="bg-[#FAF0D7] border border-[#F4B342] rounded-3xl p-6 shadow-sm space-y-4">
+      <div class="flex items-center space-x-2 text-[#9C4318] font-bold text-base">
+        <span>🔄</span>
+        <h2 class="font-serif text-xl font-medium text-[#20120B]">Faculty Counter-Proposals Awaiting Your Response</h2>
+      </div>
+      <p class="text-xs text-[#7A695E]">
+        The professor is unavailable at your requested time and has proposed an alternative slot. Please accept or decline:
+      </p>
+
+      <div class="space-y-3">
+        {% for item in countered %}
+          {% set req = item.req %}
+          {% set f = item.faculty %}
+          <div class="bg-white p-5 rounded-2xl border border-[#EADBCE] flex flex-col md:flex-row md:items-center justify-between gap-4 card-hover-lift">
+            <div>
+              <p class="font-serif text-base font-medium text-[#20120B]">{{ req.topic_tag }} with {{ f.name if f else 'Faculty' }}</p>
+              <p class="text-xs text-[#5C4D44] mt-1">
+                Proposed Time: <strong class="text-[#BA5624]">📅 {{ req.slot_start[:10] }} at {{ req.slot_start[11:16] }}</strong> ({{ req.duration }} mins)
+              </p>
+              <p class="text-xs text-[#7A695E]">📍 {{ req.location or 'Faculty Cabin' }}</p>
+              {% if req.counter_note %}
+                <p class="text-xs bg-[#FBF8F3] text-[#20120B] p-2.5 rounded-xl mt-2 border border-[#EADBCE]">
+                  <strong class="text-[#BA5624]">Professor's Note:</strong> {{ req.counter_note }}
+                </p>
+              {% endif %}
+            </div>
+
+            <div class="flex items-center space-x-2 shrink-0">
+              <form method="POST" action="/student/meetings/{{ req.id }}/accept-counter">
+                <button type="submit" class="btn-terracotta btn-glow text-xs font-semibold px-4 py-2 rounded-full shadow-sm">
+                  Accept Time &rarr;
+                </button>
+              </form>
+              <form method="POST" action="/student/meetings/{{ req.id }}/decline-counter">
+                <button type="submit" class="btn-secondary-warm btn-glow-subtle text-xs font-semibold px-3.5 py-2 rounded-full">
+                  Decline
+                </button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Section 2: Upcoming Confirmed Meetings -->
+  <div class="bg-white rounded-3xl border border-[#EADBCE] p-6 shadow-sm space-y-4">
+    <div class="flex items-center justify-between border-b border-[#EADBCE] pb-3">
+      <div class="flex items-center space-x-2">
+        <span class="text-xl">✅</span>
+        <h2 class="font-serif text-xl font-medium text-[#20120B]">Upcoming Confirmed Consultations</h2>
+      </div>
+      <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+        {{ confirmed | length }} Active
+      </span>
+    </div>
+
+    {% if confirmed %}
+      <div class="divide-y divide-[#EADBCE]">
+        {% for item in confirmed %}
+          {% set req = item.req %}
+          {% set f = item.faculty %}
+          {% set c = item.course %}
+          <div class="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center space-x-2">
+                <p class="font-serif text-base font-medium text-[#20120B]">{{ req.topic_tag }}</p>
+                {% if req.group_session_id %}
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FAF0D7] text-[#9C4318] border border-[#F4B342]">Cohort Group Session</span>
+                {% endif %}
+              </div>
+              <p class="text-xs text-[#BA5624] font-semibold mt-0.5">
+                With {{ f.name if f else 'Faculty' }} {% if c %}&bull; {{ c.code }} ({{ c.name }}){% endif %}
+              </p>
+              <p class="text-xs text-[#5C4D44] mt-1">
+                📅 <strong>{{ req.slot_start[:10] }}</strong> at <strong>{{ req.slot_start[11:16] }} - {{ req.slot_end[11:16] }}</strong> ({{ req.duration }} mins)
+              </p>
+              <p class="text-xs text-[#7A695E]">📍 {{ req.location or 'Faculty Cabin' }}</p>
+            </div>
+
+            <div>
+              <form method="POST" action="/student/meetings/{{ req.id }}/cancel" onsubmit="return confirm('Are you sure you want to cancel this confirmed consultation?');">
+                <button type="submit" class="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-3.5 py-1.5 rounded-full border border-red-200 transition">
+                  Cancel Meeting
+                </button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-xs text-[#A69588] py-4 italic">No confirmed meetings scheduled yet.</p>
+    {% endif %}
+  </div>
+
+  <!-- Section 3: Pending Inquiries -->
+  <div class="bg-white rounded-3xl border border-[#EADBCE] p-6 shadow-sm space-y-4">
+    <div class="flex items-center justify-between border-b border-[#EADBCE] pb-3">
+      <div class="flex items-center space-x-2">
+        <span class="text-xl">⏳</span>
+        <h2 class="font-serif text-xl font-medium text-[#20120B]">Pending Review Inquiries</h2>
+      </div>
+      <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+        {{ pending | length }} of 3 max pending
+      </span>
+    </div>
+
+    {% if pending %}
+      <div class="divide-y divide-[#EADBCE]">
+        {% for item in pending %}
+          {% set req = item.req %}
+          {% set f = item.faculty %}
+          <div class="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <p class="font-serif text-base font-medium text-[#20120B]">{{ req.topic_tag }}</p>
+              <p class="text-xs text-[#5C4D44]">With {{ f.name if f else 'Faculty' }} &bull; Source: {{ req.source | capitalize }}</p>
+              <p class="text-xs text-[#7A695E] mt-1">
+                Requested Slot: {{ req.slot_start[:10] }} at {{ req.slot_start[11:16] }} ({{ req.duration }} mins)
+              </p>
+              <span class="inline-block mt-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#FAF0D7] text-[#9C4318] border border-[#F4B342]">
+                Awaiting Professor Review
+              </span>
+            </div>
+
+            <div>
+              <form method="POST" action="/student/meetings/{{ req.id }}/cancel">
+                <button type="submit" class="btn-secondary-warm btn-glow-subtle text-xs px-3.5 py-1.5 rounded-full transition">
+                  Withdraw Request
+                </button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-xs text-[#A69588] py-4 italic">No pending requests.</p>
+    {% endif %}
+  </div>
+
+  <!-- Section 4: History -->
+  {% if history %}
+    <div class="bg-white rounded-3xl border border-[#EADBCE] p-6 shadow-sm space-y-3">
+      <h2 class="font-serif text-xl font-medium text-[#20120B] border-b border-[#EADBCE] pb-2">Consultation History</h2>
+      <div class="divide-y divide-[#EADBCE]">
+        {% for item in history %}
+          {% set req = item.req %}
+          <div class="py-3 flex items-center justify-between text-xs">
+            <div>
+              <span class="font-semibold text-[#20120B]">{{ req.topic_tag }}</span>
+              <span class="text-[#A69588]">&bull; {{ req.slot_start[:10] }}</span>
+            </div>
+            <div>
+              {% if req.state == 'completed' %}
+                <span class="px-2.5 py-0.5 rounded-full bg-[#F3EDE2] text-[#5C4D44] text-[11px] font-medium border border-[#EADBCE]">Completed</span>
+              {% elif req.state == 'rejected' %}
+                <span class="px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 text-[11px] font-medium border border-red-200">Declined</span>
+              {% elif req.state == 'cancelled' %}
+                <span class="px-2.5 py-0.5 rounded-full bg-[#F3EDE2] text-[#A69588] text-[11px] font-medium border border-[#EADBCE]">Cancelled</span>
+              {% elif req.state == 'no_show' %}
+                <span class="px-2.5 py-0.5 rounded-full bg-red-100 text-red-900 text-[11px] font-bold border border-red-300">No-Show</span>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

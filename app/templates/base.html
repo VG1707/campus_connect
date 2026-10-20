@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}CampusConnect{% endblock %} - Faculty Consultation Platform</title>
+
+  <!-- Google Fonts: Newsreader (Editorial Serif) & Plus Jakarta Sans (Clean Modern Sans) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- HTMX via CDN -->
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
+  <!-- Tailwind Theme Configuration -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            warm: {
+              bg: '#FAF5EE',
+              surface: '#FFFDF9',
+              card: '#FFFFFF',
+              border: '#EFE7DC',
+              borderdark: '#DCCFC0',
+              text: '#281710',
+              muted: '#766459',
+              lightmuted: '#A59285',
+            },
+            terracotta: {
+              DEFAULT: '#BA5624',
+              hover: '#A2471B',
+              light: '#FBF0E9',
+              glow: 'rgba(186, 86, 36, 0.38)',
+            },
+            amberwarm: {
+              DEFAULT: '#F4B342',
+              hover: '#E5A12D',
+              gold: '#F8C86A',
+              light: '#FDF7EB',
+            },
+            espresso: {
+              DEFAULT: '#2D1911',
+              dark: '#21110B',
+              sidebar: '#311C14',
+              card: '#3D2218',
+              active: '#4A2B20',
+            }
+          },
+          fontFamily: {
+            serif: ['Newsreader', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Global Base */
+    body {
+      background-color: #FAF5EE;
+      color: #281710;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
+    /* Interactive Button Glow & Subtle Lift Animation */
+    .btn-glow {
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .btn-glow:hover {
+      transform: translateY(-2px) scale(1.015);
+      box-shadow: 0 10px 24px -3px rgba(186, 86, 36, 0.4), 0 0 14px 2px rgba(244, 179, 66, 0.32);
+    }
+    .btn-glow:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 2px 6px rgba(186, 86, 36, 0.25);
+    }
+
+    .btn-glow-gold {
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .btn-glow-gold:hover {
+      transform: translateY(-2px) scale(1.015);
+      box-shadow: 0 10px 24px -3px rgba(244, 179, 66, 0.5), 0 0 16px 3px rgba(254, 240, 138, 0.45);
+    }
+    .btn-glow-gold:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .btn-glow-subtle {
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .btn-glow-subtle:hover {
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 8px 20px -3px rgba(45, 25, 17, 0.08), 0 0 12px 1px rgba(186, 86, 36, 0.15);
+    }
+    .btn-glow-subtle:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    /* Nav Link Glow */
+    .nav-item-glow {
+      transition: all 0.18s ease;
+    }
+    .nav-item-glow:hover {
+      transform: translateX(3px);
+      background-color: rgba(255, 255, 255, 0.08);
+      color: #FFFFFF;
+    }
+
+    /* Subtle Card Motion */
+    .card-hover-lift {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .card-hover-lift:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px -8px rgba(45, 25, 17, 0.09), 0 0 1px 1px rgba(186, 86, 36, 0.14);
+    }
+
+    /* Custom Badges */
+    .badge-warm {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.15rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    /* Guaranteed High-Contrast Button Variants */
+    /* Dark Background -> Crisp White Text */
+    .btn-terracotta {
+      background-color: #BA5624 !important;
+      color: #FFFFFF !important;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-terracotta:hover {
+      background-color: #A2471B !important;
+      color: #FFFFFF !important;
+    }
+
+    .btn-dark {
+      background-color: #2D1911 !important;
+      color: #FFFFFF !important;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-dark:hover {
+      background-color: #1E0F0A !important;
+      color: #FFFFFF !important;
+    }
+
+    /* Light Background -> Strictly Dark Text */
+    .btn-gold {
+      background-color: #F4B342 !important;
+      color: #281710 !important; /* DARK text on light gold */
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+    .btn-gold:hover {
+      background-color: #E5A12D !important;
+      color: #21110B !important;
+    }
+
+    .btn-secondary-warm {
+      background-color: #FFFFFF !important;
+      color: #281710 !important; /* DARK text on light white/cream */
+      border: 1px solid #DCCFC0 !important;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-secondary-warm:hover {
+      background-color: #F8EFE4 !important;
+      color: #21110B !important;
+      border-color: #BA5624 !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-amber-200 selection:text-amber-950">
+
+  {% set path = request.url.path %}
+  {% set is_landing = path in ['/', '/login', '/login/student', '/login/faculty', '/login/admin', '/welcome/setup'] %}
+
+  {% if is_landing %}
+    <!-- ========================================================================= -->
+    <!-- LANDING / PUBLIC AUTH LAYOUT (Images 1 & 2 Style)                         -->
+    <!-- ========================================================================= -->
+
+    <!-- Sleek Top Header for Landing -->
+    <header class="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
+      <!-- Logo: Apple on Books + CampusC[loop]nnect -->
+      <a href="/" class="flex items-center space-x-2.5 group">
+        <div class="w-10 h-10 rounded-2xl bg-[#BA5624] text-white flex items-center justify-center shadow-sm btn-glow p-2 shrink-0">
+          <!-- Official Book / Bubble Icon from Design -->
+          <svg class="w-full h-full text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+        </div>
+        <span class="text-xl font-bold tracking-tight text-terracotta font-sans inline-flex items-center">
+          <span>CampusC</span>
+          <span class="inline-flex items-center justify-center mx-[1px] relative" style="top: 0.12em;">
+            <svg class="w-[0.56em] h-[0.56em] text-terracotta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M 20 12 A 8 8 0 0 0 7 6.4 L 4 9" />
+              <polyline points="4 4 4 9 9 9" />
+              <path d="M 4 12 A 8 8 0 0 0 17 17.6 L 20 15" />
+              <polyline points="20 20 20 15 15 15" />
+            </svg>
+          </span>
+          <span>nnect</span>
+        </span>
+      </a>
+
+      <!-- Right Nav Links -->
+      <div class="flex items-center space-x-4 sm:space-x-6 text-sm font-semibold">
+        <a href="/login/faculty" class="text-espresso hover:text-terracotta transition">Faculty login</a>
+        <a href="/login/student" class="btn-terracotta btn-glow text-white px-5 py-2.5 rounded-full flex items-center space-x-1.5 shadow-sm">
+          <span>Student login</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+    </header>
+  {% endif %}
+
+  {% if not is_landing %}
+    <!-- ========================================================================= -->
+    <!-- AUTHENTICATED APP WORKSPACE WITH SLEEK SIDEBAR (Image 5 Style)             -->
+    <!-- ========================================================================= -->
+
+    <div class="flex-grow flex flex-col md:flex-row min-h-screen">
+
+      <!-- LEFT SIDEBAR (Deep Espresso Brown) -->
+      <aside class="w-full md:w-64 bg-espresso-sidebar text-[#E6D9D0] flex flex-col justify-between shrink-0 border-r border-[#42271D]">
+        
+        <div>
+          <!-- Sidebar Brand Header with Apple on Books & CampusC[loop]nnect -->
+          <div class="p-6 border-b border-[#42271D] flex items-center justify-between">
+            <a href="/" class="flex items-center space-x-2.5 group">
+              <div class="w-9 h-9 rounded-xl bg-[#4A2B20] border border-[#5E382A] text-amberwarm-gold flex items-center justify-center shadow-sm p-1 shrink-0">
+                <!-- Apple on Books SVG Icon -->
+                <svg class="w-full h-full text-amberwarm-gold drop-shadow-sm" viewBox="0 0 100 90" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M 50 18 C 49 11, 52 6, 57 2" stroke="#F4B342" stroke-width="3" />
+                  <path d="M 54 6 C 61 4, 63 11, 54 13" fill="#F4B342" fill-opacity="0.35" stroke="#F4B342" />
+                  <path d="M 50 20 C 45 15, 34 13, 29 23 C 23 34, 29 46, 43 48 C 47 48.5, 50 46, 50 46 C 50 46, 53 48.5, 57 48 C 71 46, 77 34, 71 23 C 66 13, 55 15, 50 20 Z" fill="#F4B342" fill-opacity="0.2" stroke="#F4B342" stroke-width="3" />
+                  <path d="M 24 57 C 20 57, 18 59, 18 62 C 18 65, 20 67, 24 67 L 76 67 C 80 67, 82 65, 82 62 C 82 59, 80 57, 76 57 Z" fill="#BA5624" fill-opacity="0.3" stroke="#FAF5EE" stroke-width="2.5" />
+                  <line x1="28" y1="62" x2="72" y2="62" stroke="#FAF5EE" stroke-width="1.8" />
+                  <path d="M 18 73 C 14 73, 12 75, 12 79 C 12 83, 14 85, 18 85 L 82 85 C 86 85, 88 83, 88 79 C 88 75, 86 73, 82 73 Z" fill="#BA5624" fill-opacity="0.4" stroke="#FAF5EE" stroke-width="2.5" />
+                  <line x1="22" y1="79" x2="78" y2="79" stroke="#FAF5EE" stroke-width="1.8" />
+                </svg>
+              </div>
+              <span class="text-base font-bold tracking-tight text-white font-sans inline-flex items-center">
+                <span>CampusC</span>
+                <span class="inline-flex items-center justify-center mx-[1px] relative" style="top: 0.12em;">
+                  <svg class="w-[0.56em] h-[0.56em] text-amberwarm-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M 20 12 A 8 8 0 0 0 7 6.4 L 4 9" />
+                    <polyline points="4 4 4 9 9 9" />
+                    <path d="M 4 12 A 8 8 0 0 0 17 17.6 L 20 15" />
+                    <polyline points="20 20 20 15 15 15" />
+                  </svg>
+                </span>
+                <span>nnect</span>
+              </span>
+            </a>
+          </div>
+
+          <!-- Navigation Groups -->
+          <nav class="p-4 space-y-1 text-xs font-semibold">
+            
+            {% if current_user.role == 'student' %}
+              <!-- STUDENT NAVIGATION -->
+              <a href="/student/dashboard" 
+                 class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {% if '/dashboard' in path %}bg-espresso-active text-white border-l-4 border-amberwarm font-bold shadow-inner{% else %}text-[#D1C0B5] nav-item-glow{% endif %}">
+                <span class="text-base">⊞</span>
+                <span>Overview</span>
+              </a>
+
+              <a href="/faculty-directory" 
+                 class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {% if path == '/faculty-directory' %}bg-espresso-active text-white border-l-4 border-amberwarm font-bold shadow-inner{% else %}text-[#D1C0B5] nav-item-glow{% endif %}">
+                <span class="text-base">🔍</span>
+                <span>Find Faculty</span>
+              </a>
+
+              <a href="/student/book" 
+                 class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {% if '/book' in path %}bg-espresso-active text-white border-l-4 border-amberwarm font-bold shadow-inner{% else %}text-[#D1C0B5] nav-item-glow{% endif %}">
+                <span class="text-base">📅</span>
+                <span>Book Meeting</span>
+              </a>
+
+              <a href="/student/meetings" 
+                 class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {% if '/meetings' in path %}bg-espresso-active text-white border-l-4 border-amberwarm font-bold shadow-inner{% else %}text-[#D1C0B5] nav-item-glow{% endif %}">
+                <span class="text-base">📁</span>
+                <span>My Requests</span>
+              </a>
+
+              <a href="/student/timetable" 
+                 class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {% if '/timetable' in path %}bg-espresso-active text-white border-l-4 border-amberwarm font-bold shadow-inner{% else %}text-[#D1C0B5] nav-item-glow{% endif %}">
+                <span class="text-base">🗓️</span>
+                <span>My Timetable</span>
+              </a>
+
+            {% elif current_user.role == 'faculty' %}
+              <!-- FACULTY NAVIGATION -->
+              <a href="/faculty/inbox" 
+                 class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {% if '/inbox' in path or '/dashboard' in path %}bg-espresso-active text-white border-l-4 border-amberwarm font-bold shadow-inner{% else %}text-[#D1C0B5] nav-item-glow{% endif %}">
+                <span class="text-base">📥</span>
+                <span>Inbox & Requests</span>
+              </a>
+
+              <a href="/faculty/office-hours" 
+                 class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {% if '/office-hours' in path %}bg-espresso-active text-white border-l-4 border-amberwarm font-bold shadow-inner{% else %}text-[#D1C0B5] nav-item-glow{% endif %}">
+                <span class="text-base">⏰</span>
+                <span>Office Hours</span>
+              </a>
+
+              <a href="/faculty/timetable" 
+                 class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {% if '/timetable' in path %}bg-espresso-active text-white border-l-4 border-amberwarm font-bold shadow-inner{% else %}text-[#D1C0B5] nav-item-glow{% endif %}">
+                <span class="text-base">🗓️</span>
+                <span>My Timetable</span>
+              </a>
+
+              <a href="/faculty-directory" 
+                 class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {% if path == '/faculty-directory' %}bg-espresso-active text-white border-l-4 border-amberwarm font-bold shadow-inner{% else %}text-[#D1C0B5] nav-item-glow{% endif %}">
+                <span class="text-base">🔍</span>
+                <span>Directory</span>
+              </a>
+
+              <a href="/faculty/schedule-change" 
+                 class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {% if '/schedule-change' in path %}bg-espresso-active text-white border-l-4 border-amberwarm font-bold shadow-inner{% else %}text-[#D1C0B5] nav-item-glow{% endif %}">
+                <span class="text-base">⚠️</span>
+                <span>Report Change</span>
+              </a>
+
+            {% elif current_user.role == 'admin' %}
+              <!-- ADMIN NAVIGATION -->
+              <a href="/admin" 
+                 class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {% if path == '/admin' %}bg-espresso-active text-white border-l-4 border-amberwarm font-bold shadow-inner{% else %}text-[#D1C0B5] nav-item-glow{% endif %}">
+                <span class="text-base">⚙️</span>
+                <span>Admin Panel</span>
+              </a>
+
+              <a href="/admin/metrics" 
+                 class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {% if '/metrics' in path %}bg-espresso-active text-white border-l-4 border-amberwarm font-bold shadow-inner{% else %}text-[#D1C0B5] nav-item-glow{% endif %}">
+                <span class="text-base">📈</span>
+                <span>Operations Metrics</span>
+              </a>
+
+              <a href="/admin/extraction-eval" 
+                 class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {% if '/extraction-eval' in path %}bg-espresso-active text-white border-l-4 border-amberwarm font-bold shadow-inner{% else %}text-[#D1C0B5] nav-item-glow{% endif %}">
+                <span class="text-base">🔬</span>
+                <span>OCR Benchmark</span>
+              </a>
+
+              <a href="/admin/schedule-changes" 
+                 class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {% if '/schedule-changes' in path %}bg-espresso-active text-white border-l-4 border-amberwarm font-bold shadow-inner{% else %}text-[#D1C0B5] nav-item-glow{% endif %}">
+                <span class="text-base">🛡️</span>
+                <span>Verification Panel</span>
+              </a>
+
+              <a href="/faculty-directory" 
+                 class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {% if path == '/faculty-directory' %}bg-espresso-active text-white border-l-4 border-amberwarm font-bold shadow-inner{% else %}text-[#D1C0B5] nav-item-glow{% endif %}">
+                <span class="text-base">🔍</span>
+                <span>Directory</span>
+              </a>
+            {% endif %}
+
+            <!-- Cross-Role Demo & Privacy Links -->
+            <div class="pt-4 border-t border-[#42271D] space-y-1">
+              <a href="/demo" 
+                 class="flex items-center space-x-3 px-3.5 py-2 rounded-xl transition text-amberwarm hover:text-white nav-item-glow">
+                <span class="text-base">⚡</span>
+                <span class="font-bold">Demo Hub (6 Scenarios)</span>
+              </a>
+
+              <a href="/privacy" 
+                 class="flex items-center space-x-3 px-3.5 py-2 rounded-xl transition text-[#B3A094] hover:text-white nav-item-glow">
+                <span class="text-base">🔒</span>
+                <span>Privacy & DPDP</span>
+              </a>
+            </div>
+
+          </nav>
+        </div>
+
+        <!-- Sidebar Bottom: Persona Card & Switcher -->
+        <div class="p-4 border-t border-[#42271D] bg-[#27150E] space-y-3">
+          
+          <!-- Current Active User Card -->
+          <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-full bg-amberwarm-gold text-espresso font-bold text-xs flex items-center justify-center shrink-0 shadow">
+              {{ current_user.name[:2].upper() }}
+            </div>
+            <div class="truncate flex-1 leading-tight">
+              <p class="text-xs font-bold text-white truncate">{{ current_user.name }}</p>
+              <p class="text-[10px] text-[#A59285] uppercase tracking-wider">{{ current_user.role }} &bull; {{ current_user.department[:3] }}</p>
+            </div>
+            <a href="/logout" class="text-xs text-[#A59285] hover:text-white transition p-1" title="Sign out to landing page">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </a>
+          </div>
+
+          <!-- Switch Persona Dropdown Form -->
+          <form action="/auth/switch" method="GET" class="m-0">
+            <label for="user-switcher" class="sr-only">Switch Demo Persona</label>
+            <select id="user-switcher" name="user_id" onchange="this.form.submit()"
+              class="w-full bg-[#3D2319] text-[#EDE0D6] hover:bg-[#4A2C20] text-[11px] font-medium rounded-lg px-2.5 py-1.5 border border-[#523326] focus:outline-none focus:ring-1 focus:ring-amberwarm cursor-pointer transition">
+              <optgroup label="👨‍🎓 Students">
+                {% for u in mock_users.students %}
+                  <option value="{{ u.id }}" {% if u.id == current_user.id %}selected{% endif %}>
+                    {{ u.name }} ({{ u.department[:3] }})
+                  </option>
+                {% endfor %}
+              </optgroup>
+              <optgroup label="👩‍🏫 Faculty">
+                {% for u in mock_users.faculty %}
+                  <option value="{{ u.id }}" {% if u.id == current_user.id %}selected{% endif %}>
+                    {{ u.name }} ({{ u.department[:3] }})
+                  </option>
+                {% endfor %}
+              </optgroup>
+              <optgroup label="⚙️ Administration">
+                {% for u in mock_users.admin %}
+                  <option value="{{ u.id }}" {% if u.id == current_user.id %}selected{% endif %}>
+                    {{ u.name }}
+                  </option>
+                {% endfor %}
+              </optgroup>
+            </select>
+          </form>
+
+        </div>
+
+      </aside>
+
+      <!-- RIGHT MAIN CONTENT WORKSPACE -->
+      <div class="flex-1 flex flex-col min-w-0">
+
+        <!-- Top Header Bar -->
+        <header class="bg-warm-surface border-b border-warm-border px-6 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-40">
+          <div>
+            <h1 class="text-xl sm:text-2xl font-serif font-bold text-espresso">
+              Welcome, {{ current_user.name }}
+            </h1>
+            <p class="text-xs text-warm-muted">
+              What would you like to work through today?
+            </p>
+          </div>
+
+          <!-- Right Top Bar Actions -->
+          <div class="flex items-center space-x-3">
+            
+            <!-- Notifications Bell -->
+            <a href="/notifications" class="relative p-2 rounded-full hover:bg-warm-subtle text-warm-muted hover:text-espresso transition btn-glow-subtle" title="Notifications">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              {% if unread_count and unread_count > 0 %}
+                <span class="absolute top-1 right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-terracotta rounded-full shadow">
+                  {{ unread_count }}
+                </span>
+              {% endif %}
+            </a>
+
+            <!-- Active User Avatar Badge -->
+            <div class="w-8 h-8 rounded-full bg-amberwarm-gold text-espresso font-bold text-xs flex items-center justify-center shadow-sm">
+              {{ current_user.name[:2].upper() }}
+            </div>
+
+          </div>
+        </header>
+
+        <!-- No-show lock banner if blocked -->
+        {% if current_user.is_blocked %}
+          <div class="bg-red-700 text-white text-xs px-6 py-2.5 font-medium flex items-center justify-between">
+            <span>⚠️ Notice: Your booking privileges are paused due to {{ current_user.no_show_count }} recorded no-shows. Contact academic administration to reset.</span>
+            <a href="/admin" class="underline font-bold hover:text-amber-200">Admin Reset</a>
+          </div>
+        {% endif %}
+
+  {% endif %}
+
+        <!-- Body Content -->
+        <main class="{% if is_landing %}flex-grow w-full max-w-7xl mx-auto px-6 py-4{% else %}flex-grow p-6 sm:p-8 max-w-7xl w-full mx-auto space-y-6{% endif %}">
+          {% block content %}{% endblock %}
+        </main>
+
+  {% if not is_landing %}
+        <!-- Interior Workspace Footer -->
+        <footer class="bg-warm-surface border-t border-warm-border mt-auto py-4 px-6 text-center text-xs text-warm-muted">
+          <div class="flex flex-wrap items-center justify-between gap-2 max-w-7xl mx-auto">
+            <span>🔬 <strong>CampusConnect</strong> &bull; Design Thinking Prototype</span>
+            <div class="flex items-center space-x-3 text-[11px]">
+              <a href="/demo" class="text-terracotta hover:underline font-semibold">⚡ Demo Scenarios</a>
+              <span class="text-warm-borderdark">&bull;</span>
+              <a href="/privacy" class="text-terracotta hover:underline font-semibold">🔒 Privacy & DPDP</a>
+              <span class="text-warm-borderdark">&bull;</span>
+              <a href="/admin/metrics" class="text-terracotta hover:underline font-semibold">📈 Operational Metrics</a>
+            </div>
+          </div>
+        </footer>
+
+      </div>
+
+    </div>
+
+  {% else %}
+
+    <!-- Public Landing Footer -->
+    <footer class="py-8 px-6 text-center text-xs text-warm-muted border-t border-warm-border mt-auto">
+      <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <span>CampusConnect &bull; Design Thinking Academic Prototype</span>
+        <div class="flex items-center space-x-4">
+          <a href="/demo" class="text-terracotta hover:underline font-semibold">⚡ Demo Scenarios</a>
+          <span>&bull;</span>
+          <a href="/privacy" class="text-terracotta hover:underline font-semibold">🔒 Privacy & DPDP</a>
+          <span>&bull;</span>
+          <a href="/admin" class="text-espresso hover:underline font-semibold">⚙️ Admin</a>
+        </div>
+      </div>
+    </footer>
+
+  {% endif %}
+
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "semester": 5,
+  "department": "Computer Science & Engineering",
+  "section": "CSE-B",
+  "confidence_score": 0.97,
+  "entries": [
+    {"day": "Day 1", "period": 2, "course_code": "CS301", "course_name": "Operating Systems", "room": "LH-302", "section": "CSE-B", "is_lab": false},
+    {"day": "Day 1", "period": 4, "course_code": "CS303", "course_name": "Database Management Systems", "room": "LH-302", "section": "CSE-B", "is_lab": false},
+    {"day": "Day 1", "period": 5, "course_code": "CS305", "course_name": "Theory of Computation", "room": "LH-302", "section": "CSE-B", "is_lab": false},
+    {"day": "Day 2", "period": 1, "course_code": "CS303", "course_name": "Database Management Systems", "room": "LH-302", "section": "CSE-B", "is_lab": false},
+    {"day": "Day 2", "period": 3, "course_code": "CS301", "course_name": "Operating Systems", "room": "LH-302", "section": "CSE-B", "is_lab": false},
+    {"day": "Day 2", "period": 7, "course_code": "CS307", "course_name": "Artificial Intelligence", "room": "LH-302", "section": "CSE-B", "is_lab": false},
+    {"day": "Day 3", "period": 5, "course_code": "CS302", "course_name": "OS & Networks Lab", "room": "CS-Lab-4", "section": "CSE-B", "is_lab": true},
+    {"day": "Day 3", "period": 6, "course_code": "CS302", "course_name": "OS & Networks Lab", "room": "CS-Lab-4", "section": "CSE-B", "is_lab": true},
+    {"day": "Day 4", "period": 2, "course_code": "CS305", "course_name": "Theory of Computation", "room": "LH-302", "section": "CSE-B", "is_lab": false},
+    {"day": "Day 4", "period": 4, "course_code": "CS307", "course_name": "Artificial Intelligence", "room": "LH-302", "section": "CSE-B", "is_lab": false},
+    {"day": "Day 4", "period": 5, "course_code": "CS304", "course_name": "DBMS Lab", "room": "CS-Lab-3", "section": "CSE-B", "is_lab": true},
+    {"day": "Day 4", "period": 6, "course_code": "CS304", "course_name": "DBMS Lab", "room": "CS-Lab-3", "section": "CSE-B", "is_lab": true},
+    {"day": "Day 5", "period": 1, "course_code": "CS301", "course_name": "Operating Systems", "room": "LH-302", "section": "CSE-B", "is_lab": false},
+    {"day": "Day 5", "period": 3, "course_code": "CS303", "course_name": "Database Management Systems", "room": "LH-302", "section": "CSE-B", "is_lab": false}
+  ]
+}

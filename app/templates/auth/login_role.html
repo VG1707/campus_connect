@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}{{ role_title }} Portal - Sign In{% endblock %}
+
+{% block content %}
+<div class="py-8 max-w-xl mx-auto space-y-8">
+
+  <!-- Centered Login Card (Images 3 & 4 Style) -->
+  <div class="bg-warm-surface rounded-3xl border border-warm-border p-8 sm:p-10 shadow-2xl relative space-y-6">
+    
+    <!-- Top Bar with Close 'X' and Official Brand Artwork -->
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-8 h-8 rounded-xl bg-[#311C14] border border-[#523326] text-amberwarm-gold flex items-center justify-center shadow-sm p-1 shrink-0">
+          <!-- Apple on Books SVG Icon -->
+          <svg class="w-full h-full text-amberwarm-gold drop-shadow-sm" viewBox="0 0 100 90" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M 50 18 C 49 11, 52 6, 57 2" stroke="#F4B342" stroke-width="3" />
+            <path d="M 54 6 C 61 4, 63 11, 54 13" fill="#F4B342" fill-opacity="0.35" stroke="#F4B342" />
+            <path d="M 50 20 C 45 15, 34 13, 29 23 C 23 34, 29 46, 43 48 C 47 48.5, 50 46, 50 46 C 50 46, 53 48.5, 57 48 C 71 46, 77 34, 71 23 C 66 13, 55 15, 50 20 Z" fill="#F4B342" fill-opacity="0.2" stroke="#F4B342" stroke-width="3" />
+            <path d="M 24 57 C 20 57, 18 59, 18 62 C 18 65, 20 67, 24 67 L 76 67 C 80 67, 82 65, 82 62 C 82 59, 80 57, 76 57 Z" fill="#BA5624" fill-opacity="0.3" stroke="#FAF5EE" stroke-width="2.5" />
+            <line x1="28" y1="62" x2="72" y2="62" stroke="#FAF5EE" stroke-width="1.8" />
+            <path d="M 18 73 C 14 73, 12 75, 12 79 C 12 83, 14 85, 18 85 L 82 85 C 86 85, 88 83, 88 79 C 88 75, 86 73, 82 73 Z" fill="#BA5624" fill-opacity="0.4" stroke="#FAF5EE" stroke-width="2.5" />
+            <line x1="22" y1="79" x2="78" y2="79" stroke="#FAF5EE" stroke-width="1.8" />
+          </svg>
+        </div>
+        <span class="text-base font-bold text-espresso font-sans inline-flex items-center">
+          <span>CampusC</span>
+          <span class="inline-flex items-center justify-center mx-[1px] relative" style="top: 0.12em;">
+            <svg class="w-[0.56em] h-[0.56em] text-terracotta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M 20 12 A 8 8 0 0 0 7 6.4 L 4 9" />
+              <polyline points="4 4 4 9 9 9" />
+              <path d="M 4 12 A 8 8 0 0 0 17 17.6 L 20 15" />
+              <polyline points="20 20 20 15 15 15" />
+            </svg>
+          </span>
+          <span>nnect</span>
+        </span>
+      </div>
+
+      <a href="/" class="text-warm-muted hover:text-espresso p-1.5 rounded-full hover:bg-warm-subtle transition" title="Back to Home">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </a>
+    </div>
+
+    <!-- Portal Label & Serif Title -->
+    <div>
+      <span class="text-xs font-bold tracking-widest text-terracotta uppercase">
+        {{ role_type | upper }} PORTAL
+      </span>
+      <h1 class="font-serif text-3xl sm:text-4xl font-bold text-espresso mt-1">
+        Welcome back
+      </h1>
+      <p class="text-xs sm:text-sm text-warm-muted mt-1">
+        Sign in to continue to your {{ role_type }} workspace.
+      </p>
+    </div>
+
+    <!-- Simulated Login Form -->
+    <form action="/auth/switch" method="GET" class="space-y-4 pt-1">
+      <input type="hidden" name="onboarding" value="true">
+      
+      <!-- Account Dropdown Select -->
+      <div>
+        <label class="block text-xs font-bold text-espresso mb-1.5">Campus Email / Demo Account</label>
+        <select name="user_id" id="account-select" class="w-full text-xs rounded-xl border border-warm-border p-3 bg-white text-espresso focus:ring-2 focus:ring-terracotta focus:outline-none cursor-pointer">
+          {% for u in users %}
+            <option value="{{ u.id }}">
+              {{ u.email }} ({{ u.name }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Password Dummy Input -->
+      <div>
+        <label class="block text-xs font-bold text-espresso mb-1.5">Password</label>
+        <input type="password" value="••••••••••••" readonly class="w-full text-xs rounded-xl border border-warm-border p-3 bg-warm-subtle/50 text-warm-muted focus:outline-none">
+      </div>
+
+      <!-- Primary Sign In Button -->
+      <button type="submit" class="w-full btn-terracotta btn-glow text-white font-bold text-sm py-3.5 px-6 rounded-full shadow-md flex items-center justify-center space-x-2 transition">
+        <span>Sign in</span>
+        <span>&rarr;</span>
+      </button>
+
+      <!-- Demo Account Callout Badge (From Image 3/4) -->
+      <div class="bg-amberwarm-light border border-amberwarm/30 rounded-2xl p-3.5 flex items-start space-x-3 text-left">
+        <span class="text-terracotta text-base leading-none mt-0.5">✦</span>
+        <div class="text-[11px] leading-snug">
+          <strong class="text-espresso block font-bold">Demo account is ready</strong>
+          <span class="text-warm-muted">Credentials are prefilled for this prototype. Select any account above or choose a persona below.</span>
+        </div>
+      </div>
+
+    </form>
+
+  </div>
+
+  <!-- Quick Persona Switcher Cards -->
+  <div class="space-y-3">
+    <div class="flex items-center justify-between text-xs font-bold text-warm-muted uppercase tracking-wider px-2">
+      <span>Select a {{ role_type | capitalize }} Demo Persona</span>
+      <span>{{ users | length }} Available</span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {% for u in users %}
+        <a href="/auth/switch?user_id={{ u.id }}&onboarding=true" 
+           class="bg-warm-surface border border-warm-border hover:border-terracotta p-4 rounded-2xl card-hover-lift flex items-center justify-between space-x-3 text-left group">
+          <div class="truncate">
+            <span class="font-bold text-espresso text-xs group-hover:text-terracotta transition block truncate">{{ u.name }}</span>
+            <span class="text-[11px] text-warm-muted block truncate">{{ u.department }}</span>
+          </div>
+          <span class="w-8 h-8 rounded-full bg-amberwarm-light text-espresso font-bold text-[11px] flex items-center justify-center shrink-0 group-hover:bg-terracotta group-hover:text-white transition">
+            &rarr;
+          </span>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

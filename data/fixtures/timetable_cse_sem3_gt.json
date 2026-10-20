@@ -1,0 +1,27 @@
+{
+  "semester": 3,
+  "department": "Computer Science & Engineering",
+  "section": "CSE-A",
+  "confidence_score": 0.98,
+  "entries": [
+    {"day": "Day 1", "period": 1, "course_code": "CS201", "course_name": "Data Structures", "room": "LH-201", "section": "CSE-A", "is_lab": false},
+    {"day": "Day 1", "period": 2, "course_code": "MA201", "course_name": "Discrete Mathematics", "room": "LH-201", "section": "CSE-A", "is_lab": false},
+    {"day": "Day 1", "period": 3, "course_code": "CS203", "course_name": "Digital Logic Design", "room": "LH-201", "section": "CSE-A", "is_lab": false},
+    {"day": "Day 1", "period": 5, "course_code": "CS205", "course_name": "Computer Organization", "room": "LH-201", "section": "CSE-A", "is_lab": false},
+    {"day": "Day 2", "period": 2, "course_code": "CS201", "course_name": "Data Structures", "room": "LH-201", "section": "CSE-A", "is_lab": false},
+    {"day": "Day 2", "period": 3, "course_code": "MA201", "course_name": "Discrete Mathematics", "room": "LH-201", "section": "CSE-A", "is_lab": false},
+    {"day": "Day 2", "period": 5, "course_code": "CS202", "course_name": "Data Structures Lab", "room": "CS-Lab-2", "section": "CSE-A", "is_lab": true},
+    {"day": "Day 2", "period": 6, "course_code": "CS202", "course_name": "Data Structures Lab", "room": "CS-Lab-2", "section": "CSE-A", "is_lab": true},
+    {"day": "Day 3", "period": 1, "course_code": "CS203", "course_name": "Digital Logic Design", "room": "LH-201", "section": "CSE-A", "is_lab": false},
+    {"day": "Day 3", "period": 2, "course_code": "CS205", "course_name": "Computer Organization", "room": "LH-201", "section": "CSE-A", "is_lab": false},
+    {"day": "Day 3", "period": 4, "course_code": "CS201", "course_name": "Data Structures", "room": "LH-201", "section": "CSE-A", "is_lab": false},
+    {"day": "Day 3", "period": 5, "course_code": "CS204", "course_name": "Digital Systems Lab", "room": "HW-Lab-1", "section": "CSE-A", "is_lab": true},
+    {"day": "Day 3", "period": 6, "course_code": "CS204", "course_name": "Digital Systems Lab", "room": "HW-Lab-1", "section": "CSE-A", "is_lab": true},
+    {"day": "Day 4", "period": 1, "course_code": "MA201", "course_name": "Discrete Mathematics", "room": "LH-201", "section": "CSE-A", "is_lab": false},
+    {"day": "Day 4", "period": 3, "course_code": "CS205", "course_name": "Computer Organization", "room": "LH-201", "section": "CSE-A", "is_lab": false},
+    {"day": "Day 4", "period": 6, "course_code": "CS201", "course_name": "Data Structures", "room": "LH-201", "section": "CSE-A", "is_lab": false},
+    {"day": "Day 5", "period": 2, "course_code": "CS203", "course_name": "Digital Logic Design", "room": "LH-201", "section": "CSE-A", "is_lab": false},
+    {"day": "Day 5", "period": 4, "course_code": "CS205", "course_name": "Computer Organization", "room": "LH-201", "section": "CSE-A", "is_lab": false},
+    {"day": "Day 5", "period": 7, "course_code": "GE201", "course_name": "Professional Ethics", "room": "LH-201", "section": "CSE-A", "is_lab": false}
+  ]
+}

@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Timetable (Excel, CSV, Image){% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+
+  <!-- Header -->
+  <div class="border-b border-[#EADBCE] pb-4">
+    <div class="flex items-center space-x-2">
+      <a href="/student/timetable" class="text-xs font-semibold text-[#BA5624] hover:text-[#9C4318] transition">&larr; Back to My Timetable</a>
+    </div>
+    <h1 class="font-serif text-3xl font-medium text-[#20120B] mt-2">Upload Student Timetable</h1>
+    <p class="text-xs text-[#7A695E] mt-1 font-sans">
+      Upload your weekly college timetable as an <strong>Excel spreadsheet (.xlsx)</strong>, <strong>CSV file (.csv)</strong>, or <strong>screenshot (.png, .jpg)</strong>.
+      Our extractor automatically maps your classes and lab blocks to suggest free meeting slots without timetable clashes.
+    </p>
+  </div>
+
+  <!-- Error Alert Banner -->
+  {% if error_msg %}
+  <div class="bg-red-50 border border-red-300 text-red-800 rounded-2xl p-4 text-xs font-semibold flex items-center space-x-2 shadow-sm">
+    <span class="text-base">⚠️</span>
+    <span>{{ error_msg }}</span>
+  </div>
+  {% endif %}
+
+  <!-- Downloadable Sample Templates -->
+  <div class="bg-[#FAF0D7] border border-[#F4B342] rounded-3xl p-5 shadow-sm">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h3 class="font-serif text-base font-medium text-[#20120B] flex items-center space-x-2">
+          <span>📊</span>
+          <span>Download Official Demo Files & Templates</span>
+        </h3>
+        <p class="text-xs text-[#7A695E] mt-0.5">
+          Download our pre-tested synthetic demo timetable files to test upload, OCR extraction, and editing:
+        </p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 shrink-0">
+        <a href="/student/timetable/demo-png" class="btn-secondary-warm btn-glow-subtle font-semibold text-xs px-3.5 py-2 rounded-full shadow-sm flex items-center space-x-1" title="Download Official Demo Timetable PNG">
+          <span>📸</span>
+          <span>Demo PNG</span>
+        </a>
+        <a href="/student/timetable/demo-xlsx" class="btn-terracotta btn-glow font-semibold text-xs px-3.5 py-2 rounded-full shadow-sm flex items-center space-x-1" title="Download Official Multi-Sheet Excel Timetable">
+          <span>📊</span>
+          <span>Demo (.xlsx)</span>
+        </a>
+        <a href="/student/timetable/sample-csv" class="btn-secondary-warm btn-glow-subtle font-semibold text-xs px-3 py-2 rounded-full shadow-sm flex items-center space-x-1">
+          <span>📥</span>
+          <span>CSV</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Privacy & Data Handling Guarantee Alert -->
+  <div class="bg-white border border-[#EADBCE] rounded-3xl p-5 text-xs text-[#5C4D44] space-y-2 shadow-sm">
+    <div class="flex items-center space-x-2 font-bold text-[#20120B] text-sm">
+      <span>🛡️</span>
+      <h3 class="font-serif text-base">Privacy & Data Minimization Guarantee</h3>
+    </div>
+    <ul class="list-disc list-inside space-y-1 text-[#7A695E] pl-1">
+      <li><strong>Immediate File Erasure:</strong> Uploaded spreadsheets and images are temporarily parsed in memory and permanently deleted immediately after review.</li>
+      <li><strong>Zero PII Extraction:</strong> Student names, registration numbers, or college credentials are never collected or stored.</li>
+      <li><strong>Human-in-the-Loop:</strong> You review every extracted period on the next screen before anything is saved to your profile.</li>
+    </ul>
+  </div>
+
+  <!-- Upload Form -->
+  <div class="bg-white rounded-3xl border border-[#EADBCE] p-8 shadow-sm space-y-6">
+    
+    <form method="POST" action="/student/timetable/upload" enctype="multipart/form-data" class="space-y-6">
+      
+      <!-- Option A: File Upload (Excel, CSV, Image) -->
+      <div>
+        <label class="block text-xs font-bold text-[#20120B] uppercase tracking-wider mb-2">
+          Option A: Upload File (.xlsx, .csv, .png, .jpg)
+        </label>
+        <div class="border-2 border-dashed border-[#D8C4B4] hover:border-[#BA5624] rounded-3xl p-6 text-center transition bg-[#FBF8F3]">
+          <div class="flex justify-center space-x-3 text-3xl mb-2">
+            <span>📊</span>
+            <span>📑</span>
+            <span>📸</span>
+          </div>
+          <p class="text-sm font-semibold text-[#20120B]">Drop your Excel sheet, CSV, or screenshot image here</p>
+          <p class="text-xs text-[#7A695E] mt-1">Accepts Excel (.xlsx), CSV (.csv), PNG, JPG, WEBP (Max 10MB)</p>
+          <input type="file" name="screenshot" accept=".xlsx,.xls,.csv,.tsv,image/*" class="mt-4 text-xs text-[#5C4D44] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#F3EDE2] file:text-[#BA5624] hover:file:bg-[#EADBCE] cursor-pointer">
+        </div>
+      </div>
+
+      <!-- Option B: Paste CSV or Table Text -->
+      <div class="pt-4 border-t border-[#EADBCE]">
+        <label class="block text-xs font-bold text-[#20120B] uppercase tracking-wider mb-2">
+          Option B: Or Paste Timetable Spreadsheet / CSV Text
+        </label>
+        <textarea name="pasted_text" rows="4" placeholder="Day,Period 1,Period 2,Period 3,Period 4...&#10;Day 1,CS201,MA201,CS203,-,CS205&#10;Day 2,-,CS201,MA201,-,CS202 Lab" class="w-full text-xs font-mono rounded-2xl border border-[#EADBCE] bg-[#FBF8F3] p-3 text-[#20120B] focus:outline-none focus:border-[#BA5624] placeholder-[#A69588]"></textarea>
+        <p class="text-[11px] text-[#7A695E] mt-1">
+          💡 You can copy rows straight from Excel or Google Sheets and paste them here.
+        </p>
+      </div>
+
+      <!-- Option C: Quick Demo Sample Selector -->
+      <div class="pt-4 border-t border-[#EADBCE]">
+        <label class="block text-xs font-bold text-[#20120B] uppercase tracking-wider mb-2">
+          Option C: Or Select a Pre-Loaded College Sample Fixture
+        </label>
+        <select name="sample_fixture" class="w-full text-xs rounded-xl border border-[#EADBCE] bg-[#FBF8F3] p-2.5 text-[#20120B] focus:outline-none focus:border-[#BA5624]">
+          <option value="">-- Choose a Pre-Loaded Demo Sample --</option>
+          <option value="Fake_Student_Timetable.png" selected>🌟 Official Demo 1: Fake_Student_Timetable.png (SRM ECE Sem 3 - Pixel OCR)</option>
+          <option value="CampusConnect_Fake_Timetables.xlsx">🌟 Official Demo 2: CampusConnect_Fake_Timetables.xlsx (Multi-Sheet Workbook)</option>
+          <option value="timetable_cse_sem3_gt.json">Sample 3: Computer Science & Engineering (Semester 3)</option>
+          <option value="timetable_cse_sem5_gt.json">Sample 4: Computer Science & Engineering (Semester 5)</option>
+          <option value="timetable_ece_sem3_gt.json">Sample 5: Electronics & Communication Engineering (Semester 3)</option>
+          <option value="timetable_mech_sem5_gt.json">Sample 6: Mechanical Engineering (Semester 5)</option>
+        </select>
+      </div>
+
+      <div class="pt-2">
+        <button type="submit" class="btn-terracotta btn-glow w-full py-3.5 px-4 rounded-full font-bold text-sm tracking-wide flex items-center justify-center space-x-2">
+          <span>⚡ Parse Timetable & Open Review Grid &rarr;</span>
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+{% endblock %}

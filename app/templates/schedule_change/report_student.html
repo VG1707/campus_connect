@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Report Timetable Change (Student){% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+  <!-- Header -->
+  <div class="border-b border-[#EADBCE] pb-4">
+    <div class="flex items-center space-x-2">
+      <a href="/student" class="text-xs font-semibold text-[#BA5624] hover:text-[#9C4318] transition">&larr; Back to Dashboard</a>
+      <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">Crowdsourced / Unverified</span>
+    </div>
+    <h1 class="font-serif text-3xl font-medium text-[#20120B] mt-1">Report Classroom or Timetable Adjustment</h1>
+    <p class="text-xs text-[#7A695E] mt-1 font-sans">
+      Notice an announced class swap, faculty leave, or extra class? Reporting it warns your peers during booking and routes to faculty/admin for verification.
+    </p>
+  </div>
+
+  {% if success_msg %}
+    <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-3xl text-xs font-medium">
+      ✓ {{ success_msg }}
+    </div>
+  {% endif %}
+
+  <!-- Reporting Form -->
+  <div class="bg-white rounded-3xl border border-[#EADBCE] p-8 shadow-sm">
+    <form method="POST" action="/student/schedule-change" class="space-y-4 text-xs">
+
+      <div>
+        <label class="block font-semibold text-[#20120B] mb-1.5">Faculty Member Affected</label>
+        <select name="faculty_id" class="w-full border border-[#EADBCE] bg-[#FBF8F3] rounded-xl p-2.5 text-[#20120B] focus:outline-none focus:border-[#BA5624]" required>
+          <option value="">-- Select Faculty --</option>
+          {% for f in faculty_list %}
+            <option value="{{ f.id }}">{{ f.name }} ({{ f.department }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="block font-semibold text-[#20120B] mb-1.5">What happened?</label>
+        <select name="kind" id="change-kind" class="w-full border border-[#EADBCE] bg-[#FBF8F3] rounded-xl p-2.5 text-[#20120B] focus:outline-none focus:border-[#BA5624]" required onchange="toggleFormFields()">
+          <option value="cancel">Faculty announced class is cancelled</option>
+          <option value="swap">Class swapped / moved to a different period</option>
+          <option value="extra_class">Extra class or seminar announced</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block font-semibold text-[#20120B] mb-1.5">Date</label>
+          <input type="date" name="change_date" value="{{ today_str }}" class="w-full border border-[#EADBCE] bg-[#FBF8F3] rounded-xl p-2.5 text-[#20120B] focus:outline-none focus:border-[#BA5624]" required>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-[#20120B] mb-1.5" id="period-label">Period (1 - 8)</label>
+          <select name="period" class="w-full border border-[#EADBCE] bg-[#FBF8F3] rounded-xl p-2.5 text-[#20120B] focus:outline-none focus:border-[#BA5624]">
+            {% for p in range(1, 9) %}
+              <option value="{{ p }}">Period {{ p }} ({{ period_timings.get(p, ('', ''))[0] }} - {{ period_timings.get(p, ('', ''))[1] }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div id="new-period-container" class="hidden">
+        <label class="block font-semibold text-[#20120B] mb-1.5">Moved To (New Period)</label>
+        <select name="new_period" class="w-full border border-[#EADBCE] bg-[#FBF8F3] rounded-xl p-2.5 text-[#20120B] focus:outline-none focus:border-[#BA5624]">
+          {% for p in range(1, 9) %}
+            <option value="{{ p }}">Period {{ p }} ({{ period_timings.get(p, ('', ''))[0] }} - {{ period_timings.get(p, ('', ''))[1] }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="block font-semibold text-[#20120B] mb-1.5">Details / Source</label>
+        <textarea name="note" rows="2" placeholder="e.g. CR announced on WhatsApp group that Sir is on leave" class="w-full border border-[#EADBCE] bg-[#FBF8F3] rounded-xl p-2.5 text-[#20120B] focus:outline-none focus:border-[#BA5624]" required></textarea>
+      </div>
+
+      <div class="p-3.5 bg-[#FAF0D7] border border-[#F4B342] rounded-2xl text-[11px] text-[#9C4318]">
+        ℹ️ Student reports are marked <strong>Unverified</strong>. A warning will appear on matching slots to alert students, but teaching hours will not be altered until verified by admin or faculty.
+      </div>
+
+      <div class="pt-2 border-t border-[#F3EDE2] flex items-center justify-end">
+        <button type="submit" class="btn-terracotta btn-glow font-bold text-xs px-6 py-2.5 rounded-full shadow-sm">
+          Submit Timetable Report
+        </button>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<script>
+function toggleFormFields() {
+  const kind = document.getElementById('change-kind').value;
+  const newPeriodDiv = document.getElementById('new-period-container');
+  const periodLabel = document.getElementById('period-label');
+
+  if (kind === 'swap') {
+    newPeriodDiv.classList.remove('hidden');
+    periodLabel.innerText = "Original Period";
+  } else if (kind === 'cancel') {
+    newPeriodDiv.classList.add('hidden');
+    periodLabel.innerText = "Period Cancelled";
+  } else {
+    newPeriodDiv.classList.add('hidden');
+    periodLabel.innerText = "Period of Extra Class";
+  }
+}
+</script>
+{% endblock %}

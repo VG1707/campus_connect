@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy & Data Protection{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+
+  <!-- Header -->
+  <div class="border-b border-[#EADBCE] pb-5">
+    <div class="flex items-center space-x-2">
+      <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">DPDP Act (2023) Aligned</span>
+      <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F3EDE2] text-[#BA5624] border border-[#EADBCE]">Educational Prototype</span>
+    </div>
+    <h1 class="font-serif text-3xl font-medium text-[#20120B] mt-2">Privacy, Retention & Data Minimization</h1>
+    <p class="text-xs text-[#7A695E] mt-1 font-sans">
+      CampusConnect is engineered from the ground up to respect student data privacy, enforce purpose limitation, and guarantee immediate deletion of sensitive screenshot media.
+    </p>
+  </div>
+
+  {% if request.query_params.get('deleted') == 'true' %}
+    <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-3xl text-xs font-medium">
+      ✓ Data Erasure Completed: All your timetable classes, meeting bookings, and notifications have been permanently removed from the database.
+    </div>
+  {% endif %}
+
+  <!-- Core Principles Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-white p-6 rounded-3xl border border-[#EADBCE] shadow-sm space-y-2.5 card-hover-lift">
+      <div class="text-2xl">🔒</div>
+      <h3 class="font-serif text-base font-medium text-[#20120B]">Purpose Limitation</h3>
+      <p class="text-xs text-[#7A695E] leading-relaxed">
+        Timetable information is solely used to find non-conflicting consultation slots with faculty. It is never sold, shared, or used for grading or student profiling.
+      </p>
+    </div>
+
+    <div class="bg-white p-6 rounded-3xl border border-[#EADBCE] shadow-sm space-y-2.5 card-hover-lift">
+      <div class="text-2xl">🗑️</div>
+      <h3 class="font-serif text-base font-medium text-[#20120B]">Immediate Image Deletion</h3>
+      <p class="text-xs text-[#7A695E] leading-relaxed">
+        Screenshot uploads are temporary files. The moment you confirm or cancel your extracted timetable grid, the image is permanently wiped from disk. Zero image bytes stored.
+      </p>
+    </div>
+
+    <div class="bg-white p-6 rounded-3xl border border-[#EADBCE] shadow-sm space-y-2.5 card-hover-lift">
+      <div class="text-2xl">🛡️</div>
+      <h3 class="font-serif text-base font-medium text-[#20120B]">Data Minimization</h3>
+      <p class="text-xs text-[#7A695E] leading-relaxed">
+        We never ask for college portal passwords, government IDs (Aadhaar), phone numbers, or academic marks. We store only period numbers and course codes.
+      </p>
+    </div>
+  </div>
+
+  <!-- Detailed Policy Sections -->
+  <div class="bg-white rounded-3xl border border-[#EADBCE] p-8 shadow-sm space-y-6 text-xs text-[#5C4D44] leading-relaxed">
+    <div>
+      <h2 class="font-serif text-lg font-medium text-[#20120B] border-b border-[#F3EDE2] pb-2">1. Data Collected & Storage Scope</h2>
+      <ul class="list-disc pl-5 mt-2.5 space-y-1.5 text-[#7A695E]">
+        <li><strong>User Profile:</strong> Name, institutional email, simulated role (Student/Faculty/Admin), and Department.</li>
+        <li><strong>Timetable Records:</strong> Day order / weekday, period number (1 through 8), room number, and course code.</li>
+        <li><strong>Meeting Inquiries:</strong> Topic tags (e.g. "Pointers in C"), preferred time window, booking status, and counter-proposal notes.</li>
+        <li><strong>Extraction Benchmark Logs:</strong> Anonymous counts of extracted cells and review time in seconds. No personal identifiers attached.</li>
+      </ul>
+    </div>
+
+    <div>
+      <h2 class="font-serif text-lg font-medium text-[#20120B] border-b border-[#F3EDE2] pb-2">2. Retention and Expiration</h2>
+      <p class="mt-2.5 text-[#7A695E]">
+        Student timetable mappings automatically expire at the conclusion of each academic semester. Consultation records and audit logs are retained during the active term for academic integrity and conflict verification, after which they are purged.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="font-serif text-lg font-medium text-[#20120B] border-b border-[#F3EDE2] pb-2">3. Role-Based Privacy & Confidentiality</h2>
+      <p class="mt-2.5 text-[#7A695E]">
+        Students can never view another student's full timetable, attendance, or private doubt descriptions. When group sessions are suggested, faculty see aggregated counts and enrolled names, but individual student notes remain private.
+      </p>
+    </div>
+
+    <!-- Right to Erasure / Self-Service Deletion -->
+    <div class="bg-[#FAF0D7]/60 border border-[#F4B342] rounded-3xl p-6 space-y-3">
+      <div class="flex items-center space-x-2">
+        <span class="text-xl">⚠️</span>
+        <h3 class="font-serif text-base font-medium text-[#9C4318]">Right to Erasure (DPDP Act 2023)</h3>
+      </div>
+      <p class="text-xs text-[#7A695E]">
+        You have the complete right to purge your personal data at any point. Clicking the button below will immediately delete all your timetable entries, meeting requests, and notifications from the system.
+      </p>
+      <form method="POST" action="/privacy/delete-my-data" onsubmit="return confirm('Are you sure? This will permanently delete your timetable and meeting bookings for this account.');" class="pt-1">
+        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-5 py-2.5 rounded-full transition shadow-sm hover:scale-[1.02]">
+          🗑️ Permanently Delete My Data ({{ current_user.name }})
+        </button>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

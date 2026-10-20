@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block title %}CampusConnect - Find the time. Make the connection.{% endblock %}
+
+{% block content %}
+<div class="space-y-24 py-6 md:py-12">
+
+  <!-- ========================================================================= -->
+  <!-- HERO SECTION (Image 1 Style)                                              -->
+  <!-- ========================================================================= -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+    
+    <!-- Left Column: Copy & Actions (col-span-7) -->
+    <div class="lg:col-span-7 space-y-7">
+      
+      <!-- Pill Badge -->
+      <div class="inline-flex items-center space-x-2 bg-amberwarm-light text-terracotta border border-amberwarm/40 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide">
+        <span class="text-amberwarm text-sm">✦</span>
+        <span>Welcome to CampusConnect &bull; Built For Better Office Hours</span>
+      </div>
+
+      <!-- Main Serif Headline -->
+      <h1 class="font-serif text-5xl sm:text-6xl xl:text-7xl font-bold text-espresso leading-[1.08] tracking-tight">
+        Find the time.<br>
+        <span class="text-terracotta">Make the connection.</span>
+      </h1>
+
+      <!-- Subtitle -->
+      <p class="text-base sm:text-lg text-warm-muted leading-relaxed max-w-lg">
+        CampusConnect makes it simple to find faculty, request time outside class, and keep every conversation organized.
+      </p>
+
+      <!-- Primary Action Buttons (Matching Uploaded Design) -->
+      <div class="flex flex-wrap items-center gap-3 pt-2">
+        <a href="/login/student" 
+           class="btn-terracotta btn-glow text-white font-bold text-sm px-7 py-3.5 rounded-full shadow-md flex items-center space-x-2">
+          <span>Get started as a student</span>
+          <span class="sr-only">Student Portal</span>
+          <span>&rarr;</span>
+        </a>
+
+        <a href="/login/faculty" 
+           class="btn-secondary-warm btn-glow-subtle font-bold text-sm px-6 py-3.5 rounded-full">
+          <span>I'm faculty</span>
+          <span class="sr-only">Faculty Portal</span>
+        </a>
+      </div>
+
+      <!-- Social Community Avatars & Trust Line -->
+      <div class="flex items-center space-x-3.5 pt-4">
+        <!-- Avatar Stack -->
+        <div class="flex -space-x-2">
+          <div class="w-8 h-8 rounded-full bg-[#FCE5B5] border-2 border-warm-bg text-espresso text-[11px] font-bold flex items-center justify-center">
+            AM
+          </div>
+          <div class="w-8 h-8 rounded-full bg-[#FAD2B8] border-2 border-warm-bg text-espresso text-[11px] font-bold flex items-center justify-center">
+            JL
+          </div>
+          <div class="w-8 h-8 rounded-full bg-[#E8D0C3] border-2 border-warm-bg text-espresso text-[11px] font-bold flex items-center justify-center">
+            SK
+          </div>
+        </div>
+        
+        <div class="text-xs leading-snug">
+          <p class="font-bold text-espresso">Join your campus community</p>
+          <p class="text-warm-muted text-[11px]">Focused conversations, on your schedule.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Live Demo Preview inside the Burgundy Card (col-span-5) -->
+    <div class="lg:col-span-5 flex justify-center w-full">
+      
+      <!-- Burgundy Main Canvas Card (Live Demo Preview of CampusConnect Student Dashboard) -->
+      <div class="w-full bg-gradient-to-br from-[#451417] via-[#320F12] to-[#22090B] border-4 border-white rounded-[2rem] p-5 sm:p-6 shadow-2xl relative flex flex-col space-y-4 text-left overflow-hidden">
+        
+        <!-- Subtle Inner Warm Glow -->
+        <div class="absolute -top-16 -right-16 w-48 h-48 bg-amberwarm/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-16 -left-16 w-48 h-48 bg-terracotta/15 rounded-full blur-3xl pointer-events-none"></div>
+
+        <!-- 1. Mini Application Top Bar -->
+        <div class="relative z-10 flex items-center justify-between border-b border-white/10 pb-3">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-8 h-8 rounded-full bg-amberwarm-gold text-espresso font-bold text-xs flex items-center justify-center shrink-0 shadow">
+              {{ demo_student.name[:2].upper() if demo_student else 'MN' }}
+            </div>
+            <div class="leading-tight">
+              <div class="flex items-center space-x-1.5">
+                <span class="text-xs font-bold text-white">{{ demo_student.name.split('(')[0].strip() if demo_student else 'Meera Nair' }}</span>
+                <span class="inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span>
+                  Live Demo
+                </span>
+              </div>
+              <p class="text-[10px] text-[#CDB8AD]">Student &bull; {{ demo_student.department if demo_student else 'Computer Science' }}</p>
+            </div>
+          </div>
+          
+          <span class="badge-warm bg-white/10 text-amberwarm-gold border border-amberwarm/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
+            ✦ Student Workspace
+          </span>
+        </div>
+
+        <!-- 2. Mini Timetable Match Hero Banner (Mirror of Real Student Dashboard) -->
+        <div class="relative z-10 bg-gradient-to-r from-[#5A1D21] to-[#3B1115] border border-amberwarm/30 rounded-2xl p-3.5 shadow-md flex items-center justify-between">
+          <div class="space-y-0.5">
+            <div class="inline-flex items-center space-x-1 text-amberwarm text-[9px] font-bold tracking-wider uppercase">
+              <span>✦</span>
+              <span>TIMETABLE MATCH</span>
+            </div>
+            <p class="text-xs sm:text-sm font-bold text-white">
+              Wednesday at 2:00 PM
+            </p>
+            <p class="text-[10px] text-[#D8C7BD]">
+              With {{ demo_faculty.name if demo_faculty else 'Dr. Rajesh Raman' }} &bull; 0 clashes
+            </p>
+          </div>
+
+          <div class="bg-[#240A0C]/90 border border-amberwarm/40 rounded-xl px-2.5 py-1.5 text-center shrink-0 shadow-inner">
+            <span class="text-[13px] font-bold text-amberwarm font-mono block">14:00</span>
+            <span class="text-[8px] text-[#CDB8AD] uppercase tracking-wide block">Auto-confirm</span>
+          </div>
+        </div>
+
+        <!-- 3. Available Consultation Slots (Deterministic Matching Engine Output) -->
+        <div class="relative z-10 space-y-1.5">
+          <div class="flex items-center justify-between text-[10px]">
+            <span class="font-bold uppercase tracking-wider text-amberwarm">Available Consultation Slots</span>
+            <span class="text-[9px] text-[#BCA69B]">Deterministic Engine</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            {% if live_slots %}
+              {% for slot in live_slots[:2] %}
+                <div class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-2.5 transition">
+                  <div class="flex items-center justify-between text-[10px] font-bold text-white">
+                    <span>{{ slot.day_str[:3] }} {{ slot.time_str }}</span>
+                    {% if slot.can_auto_confirm %}
+                      <span class="bg-emerald-500/20 text-emerald-300 text-[8px] px-1 py-0.5 rounded font-bold">Auto</span>
+                    {% else %}
+                      <span class="bg-amberwarm/20 text-amberwarm text-[8px] px-1 py-0.5 rounded font-bold">Pending</span>
+                    {% endif %}
+                  </div>
+                  <p class="text-[9px] text-[#CDB8AD] mt-1 truncate">{{ slot.location }}</p>
+                  <p class="text-[9px] text-amberwarm font-medium mt-0.5">{{ slot.remaining_capacity }} of {{ slot.capacity }} seats left</p>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="col-span-2 bg-white/5 rounded-xl p-2 text-center text-[10px] text-white">
+                Wed 14:00 - 15:00 &bull; Office Hours Active
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- 4. Upcoming Meetings & Timetable Info Grid -->
+        <div class="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          
+          <!-- Upcoming Meetings -->
+          <div class="bg-black/25 border border-white/10 rounded-xl p-2.5 space-y-1.5">
+            <span class="text-[9px] font-bold uppercase tracking-wider text-amberwarm block">Upcoming Meetings</span>
+            {% if demo_meetings %}
+              {% for m in demo_meetings %}
+                <div class="bg-white/5 border border-white/5 rounded-lg p-1.5 text-[9px] flex items-center justify-between">
+                  <div class="truncate pr-1">
+                    <p class="font-bold text-white truncate">{{ m.topic }}</p>
+                    <p class="text-[8px] text-[#BCA69B] truncate">{{ m.faculty_name }} &bull; {{ m.location.split(',')[0] }}</p>
+                  </div>
+                  <span class="shrink-0 text-[8px] font-bold uppercase px-1 py-0.5 rounded {% if m.state == 'confirmed' %}bg-emerald-500/20 text-emerald-300 border border-emerald-500/30{% else %}bg-amberwarm/20 text-amberwarm border border-amberwarm/30{% endif %}">
+                    {{ m.state }}
+                  </span>
+                </div>
+              {% endfor %}
+            {% else %}
+              <p class="text-[9px] text-[#BCA69B]">No pending meetings</p>
+            {% endif %}
+          </div>
+
+          <!-- Timetable Information -->
+          <div class="bg-black/25 border border-white/10 rounded-xl p-2.5 space-y-1.5">
+            <div class="flex items-center justify-between text-[9px]">
+              <span class="font-bold uppercase tracking-wider text-amberwarm">Timetable (Day 1)</span>
+              <span class="text-emerald-400 font-semibold">&check; 19 mapped</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1 text-[8px] text-center">
+              {% for entry in demo_timetable[:4] %}
+                <div class="bg-white/5 border border-white/5 rounded-md p-1 truncate">
+                  <span class="font-bold text-amberwarm-gold block">P{{ entry.period }}: {{ entry.code }}</span>
+                  <span class="text-[#CDB8AD] truncate block">{{ entry.room }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 5. Sample Faculty Directory Strip -->
+        <div class="relative z-10 space-y-1">
+          <span class="text-[9px] font-bold uppercase tracking-wider text-amberwarm block">Sample Faculty Available</span>
+          <div class="grid grid-cols-3 gap-1.5">
+            {% for f in sample_faculty %}
+              <div class="bg-white/5 border border-white/10 rounded-xl p-2 text-center truncate">
+                <p class="text-[10px] font-bold text-white truncate">{{ f.name.replace('Dr. ', '').replace('Prof. ', '') }}</p>
+                <p class="text-[8px] text-amberwarm truncate">{{ f.course }}</p>
+                <span class="text-[7px] text-emerald-400 block mt-0.5">&bull; Office Hours Active</span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- 6. Prominent "Explore Full Demo" Button -->
+        <div class="relative z-10 pt-1">
+          <a href="/auth/switch?user_id=14&onboarding=false" 
+             class="w-full btn-gold btn-glow-gold text-espresso font-bold text-xs py-3 rounded-xl shadow-lg flex items-center justify-center space-x-2 transition tracking-wide">
+            <span>Explore Full Demo</span>
+            <span>&rarr;</span>
+          </a>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- HOW IT WORKS SECTION (Image 2 Style)                                      -->
+  <!-- ========================================================================= -->
+  <div class="border-t border-warm-border pt-16 space-y-10">
+    
+    <div>
+      <span class="text-xs font-bold tracking-widest text-terracotta uppercase">How It Works</span>
+      <h2 class="font-serif text-3xl sm:text-4xl font-bold text-espresso mt-1">
+        From question to conversation
+      </h2>
+    </div>
+
+    <!-- 3 Core Feature Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <!-- Card 01: Upload Timetables -->
+      <div class="bg-warm-surface rounded-3xl border border-warm-border p-8 card-hover-lift flex flex-col justify-between relative overflow-hidden group">
+        <span class="absolute top-4 right-6 font-serif text-5xl font-bold text-warm-border/60 group-hover:text-amberwarm/40 transition select-none">
+          01
+        </span>
+        <div class="space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-amberwarm-light text-terracotta flex items-center justify-center text-2xl">
+            📤
+          </div>
+          <h3 class="font-serif text-xl font-bold text-espresso">Upload timetables</h3>
+          <p class="text-xs sm:text-sm text-warm-muted leading-relaxed">
+            Students and faculty add their weekly class schedules via Excel (.xlsx), CSV, or screenshot.
+          </p>
+        </div>
+      </div>
+
+      <!-- Card 02: Check Both Schedules -->
+      <div class="bg-warm-surface rounded-3xl border border-warm-border p-8 card-hover-lift flex flex-col justify-between relative overflow-hidden group">
+        <span class="absolute top-4 right-6 font-serif text-5xl font-bold text-warm-border/60 group-hover:text-amberwarm/40 transition select-none">
+          02
+        </span>
+        <div class="space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-amberwarm-light text-terracotta flex items-center justify-center text-2xl">
+            📅
+          </div>
+          <h3 class="font-serif text-xl font-bold text-espresso">Check both schedules</h3>
+          <p class="text-xs sm:text-sm text-warm-muted leading-relaxed">
+            CampusConnect finds the exact times when you are both free, avoiding classes, labs, and holidays.
+          </p>
+        </div>
+      </div>
+
+      <!-- Card 03: Choose a Match -->
+      <div class="bg-warm-surface rounded-3xl border border-warm-border p-8 card-hover-lift flex flex-col justify-between relative overflow-hidden group">
+        <span class="absolute top-4 right-6 font-serif text-5xl font-bold text-warm-border/60 group-hover:text-amberwarm/40 transition select-none">
+          03
+        </span>
+        <div class="space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-amberwarm-light text-terracotta flex items-center justify-center text-2xl">
+            🤝
+          </div>
+          <h3 class="font-serif text-xl font-bold text-espresso">Choose a match</h3>
+          <p class="text-xs sm:text-sm text-warm-muted leading-relaxed">
+            Select a suggested slot, share your topic, and connect instantly or request an on-demand gap.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Academic Disclaimer -->
+    <p class="text-center text-xs text-warm-muted pt-4">
+      CampusConnect improves access to faculty outside class hours. It does not guarantee academic outcomes.
+    </p>
+
+  </div>
+
+</div>
+{% endblock %}

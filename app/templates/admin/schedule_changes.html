@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule Changes & Verification{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-[#EADBCE] pb-4 gap-4">
+    <div>
+      <div class="flex items-center space-x-2">
+        <a href="/admin" class="text-xs font-semibold text-[#BA5624] hover:text-[#9C4318] transition">&larr; Back to Admin Panel</a>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F3EDE2] text-[#BA5624] border border-[#EADBCE]">Crowdsource Moderation</span>
+      </div>
+      <h1 class="font-serif text-3xl font-medium text-[#20120B] mt-1">Schedule Change Verification</h1>
+      <p class="text-xs text-[#7A695E] mt-0.5 font-sans">
+        Review crowdsourced student reports and faculty schedule overrides. Verified changes directly alter slot matching availability.
+      </p>
+    </div>
+  </div>
+
+  <!-- Changes List -->
+  <div class="bg-white rounded-3xl border border-[#EADBCE] shadow-sm overflow-hidden">
+    <div class="p-5 border-b border-[#F3EDE2] flex items-center justify-between">
+      <h2 class="font-serif text-lg font-medium text-[#20120B]">All Reported Changes ({{ changes_list | length }})</h2>
+      <span class="text-xs text-[#7A695E]">Unverified reports display warning badges in student booking</span>
+    </div>
+
+    {% if changes_list %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-[#F3EDE2] text-[#20120B] border-b border-[#EADBCE]">
+              <th class="p-3 font-semibold">Reported</th>
+              <th class="p-3 font-semibold">Kind</th>
+              <th class="p-3 font-semibold">Faculty / Owner</th>
+              <th class="p-3 font-semibold">Effective Date & Periods</th>
+              <th class="p-3 font-semibold">Notes / Details</th>
+              <th class="p-3 font-semibold">Source</th>
+              <th class="p-3 font-semibold">Verification Status</th>
+              <th class="p-3 font-semibold text-right">Admin Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#F3EDE2]">
+            {% for item in changes_list %}
+              {% set chg = item.chg %}
+              {% set faculty = item.faculty %}
+              {% set d = chg.details %}
+              <tr class="hover:bg-[#FBF8F3] transition">
+                <td class="p-3 text-[#7A695E] font-mono">{{ chg.created_at[:16] | replace('T', ' ') }}</td>
+                <td class="p-3">
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold 
+                    {% if chg.kind == 'cancel' %}bg-rose-50 text-rose-800 border border-rose-200
+                    {% elif chg.kind == 'swap' %}bg-[#FAF0D7] text-[#9C4318] border border-[#F4B342]
+                    {% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+                    {{ chg.kind | upper }}
+                  </span>
+                </td>
+                <td class="p-3 font-bold text-[#20120B]">
+                  {{ faculty.name if faculty else 'User #' ~ chg.owner_id }}
+                </td>
+                <td class="p-3 text-[#20120B]">
+                  📅 <strong>{{ d.get('date', 'N/A') }}</strong>
+                  <br>
+                  <span class="text-[11px] text-[#7A695E]">
+                    {% if chg.kind == 'swap' %}
+                      P{{ d.get('original_period') }} &rarr; P{{ d.get('new_period') }}
+                    {% elif chg.kind == 'cancel' %}
+                      P{{ d.get('period') }} (Cancelled)
+                    {% else %}
+                      P{{ d.get('period') }} (Extra Class)
+                    {% endif %}
+                  </span>
+                </td>
+                <td class="p-3 text-[#7A695E] italic max-w-xs truncate">
+                  "{{ d.get('note', '') }}"
+                </td>
+                <td class="p-3">
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold {% if chg.reported_by == 'faculty' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-amber-50 text-amber-700 border border-amber-200{% endif %}">
+                    {{ chg.reported_by | capitalize }}
+                  </span>
+                </td>
+                <td class="p-3">
+                  {% if chg.verification == 'verified' %}
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">✓ Verified</span>
+                  {% elif chg.verification == 'rejected' %}
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-800 border border-red-200">✗ Rejected</span>
+                  {% else %}
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">⏳ Unverified</span>
+                  {% endif %}
+                </td>
+                <td class="p-3 text-right">
+                  {% if chg.verification == 'unverified' %}
+                    <div class="inline-flex items-center space-x-1">
+                      <form method="POST" action="/admin/schedule-changes/{{ chg.id }}/verify">
+                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-2.5 py-1 rounded-full text-[11px] transition">
+                          ✓ Verify
+                        </button>
+                      </form>
+                      <form method="POST" action="/admin/schedule-changes/{{ chg.id }}/reject">
+                        <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-700 font-semibold px-2.5 py-1 rounded-full border border-red-200 text-[11px] transition">
+                          ✗ Reject
+                        </button>
+                      </form>
+                    </div>
+                  {% else %}
+                    <span class="text-[11px] text-[#A69588]">Resolved</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="p-8 text-center text-[#A69588] text-xs italic">
+        No schedule changes reported yet.
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

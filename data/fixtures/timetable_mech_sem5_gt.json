@@ -1,0 +1,19 @@
+{
+  "semester": 5,
+  "department": "Mechanical Engineering",
+  "section": "ME-A",
+  "confidence_score": 0.95,
+  "entries": [
+    {"day": "Day 1", "period": 2, "course_code": "ME301", "course_name": "Thermodynamics II", "room": "ME-LH-2", "section": "ME-A", "is_lab": false},
+    {"day": "Day 1", "period": 4, "course_code": "ME303", "course_name": "Fluid Mechanics", "room": "ME-LH-2", "section": "ME-A", "is_lab": false},
+    {"day": "Day 2", "period": 1, "course_code": "ME305", "course_name": "Kinematics of Machinery", "room": "ME-LH-2", "section": "ME-A", "is_lab": false},
+    {"day": "Day 2", "period": 5, "course_code": "ME302", "course_name": "Thermal Engineering Lab", "room": "ME-Lab-1", "section": "ME-A", "is_lab": true},
+    {"day": "Day 2", "period": 6, "course_code": "ME302", "course_name": "Thermal Engineering Lab", "room": "ME-Lab-1", "section": "ME-A", "is_lab": true},
+    {"day": "Day 3", "period": 2, "course_code": "ME301", "course_name": "Thermodynamics II", "room": "ME-LH-2", "section": "ME-A", "is_lab": false},
+    {"day": "Day 3", "period": 3, "course_code": "ME303", "course_name": "Fluid Mechanics", "room": "ME-LH-2", "section": "ME-A", "is_lab": false},
+    {"day": "Day 4", "period": 3, "course_code": "ME305", "course_name": "Kinematics of Machinery", "room": "ME-LH-2", "section": "ME-A", "is_lab": false},
+    {"day": "Day 4", "period": 5, "course_code": "ME304", "course_name": "Fluid Dynamics Lab", "room": "ME-Lab-2", "section": "ME-A", "is_lab": true},
+    {"day": "Day 4", "period": 6, "course_code": "ME304", "course_name": "Fluid Dynamics Lab", "room": "ME-Lab-2", "section": "ME-A", "is_lab": true},
+    {"day": "Day 5", "period": 1, "course_code": "ME301", "course_name": "Thermodynamics II", "room": "ME-LH-2", "section": "ME-A", "is_lab": false}
+  ]
+}
