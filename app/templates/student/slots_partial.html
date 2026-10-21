@@ -74,6 +74,17 @@
                 Requires Approval
               </span>
             {% endif %}
+
+            <!-- Language Compatibility Badge -->
+            {% if slot.shared_languages %}
+              <span class="badge-warm bg-emerald-50 text-emerald-900 border border-emerald-200">
+                🗣️ Shared: {{ slot.shared_languages | join(', ') }}
+              </span>
+            {% elif slot.faculty_languages %}
+              <span class="badge-warm bg-warm-subtle text-warm-muted border border-warm-border">
+                🗣️ {{ slot.faculty_languages | join(', ') }}
+              </span>
+            {% endif %}
           </div>
         </div>
 

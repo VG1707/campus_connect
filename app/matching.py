@@ -30,6 +30,9 @@ class MatchedSlot(BaseModel):
     office_hour_id: Optional[int] = None
     faculty_id: int
     faculty_name: str
+    faculty_languages: List[str] = []
+    shared_languages: List[str] = []
+    language_match_label: Optional[str] = None
     location: str
     capacity: int
     current_bookings: int
@@ -146,13 +149,17 @@ def calculate_slot_score(
     capacity: int,
     can_auto_confirm: bool,
     student_class_intervals: List[Tuple[datetime, datetime, str]],
-    is_on_demand: bool
+    is_on_demand: bool,
+    shared_languages: Optional[List[str]] = None,
+    faculty_languages: Optional[List[str]] = None
 ) -> Tuple[float, str]:
     """
-    Transparent scoring function (0-100 pts) with human-readable rationale.
+    Transparent scoring function with human-readable rationale:
     1. Closeness to preferred window center (0-50 pts).
     2. Campus idle gap with student's classes (0-30 pts).
     3. Capacity & auto-confirm ease (0-20 pts).
+    4. Language compatibility boost (0-15 pts) - prioritises shared language,
+       without hiding non-matching faculty.
     """
     reasons = []
 
@@ -214,7 +221,15 @@ def calculate_slot_score(
             cap_pts += 5.0
             reasons.append(f"1 of {capacity} seats remaining")
 
-    total_score = round(proximity_pts + gap_pts + cap_pts, 1)
+    # 4. Language Compatibility
+    lang_pts = 0.0
+    if shared_languages:
+        lang_pts = 15.0
+        reasons.append(f"Language compatibility ({', '.join(shared_languages)})")
+    elif faculty_languages:
+        reasons.append(f"Faculty speaks: {', '.join(faculty_languages)} (no language overlap)")
+
+    total_score = round(proximity_pts + gap_pts + cap_pts + lang_pts, 1)
     reason_str = "; ".join(reasons)
     return total_score, reason_str
 
@@ -263,6 +278,21 @@ def find_matching_slots(
     faculty = session.get(User, faculty_id)
     if not faculty:
         raise MatchingError("Faculty record not found.")
+
+    # Rule 2b: Language compatibility extraction
+    student_langs = student.languages
+    faculty_langs = faculty.languages
+    student_langs_lower = {l.strip().lower(): l.strip() for l in student_langs}
+    shared_languages = [
+        fl.strip()
+        for fl in faculty_langs
+        if fl.strip().lower() in student_langs_lower
+    ]
+    lang_match_label = (
+        f"Shared language: {', '.join(shared_languages)}"
+        if shared_languages
+        else f"Speaks: {', '.join(faculty_langs)}"
+    )
 
     # Rule 3: Check student timetable status
     stmt_tt = select(TimetableEntry).where(TimetableEntry.owner_id == student_id)
@@ -430,7 +460,9 @@ def find_matching_slots(
                     capacity=oh.capacity,
                     can_auto_confirm=can_auto,
                     student_class_intervals=student_classes,
-                    is_on_demand=False
+                    is_on_demand=False,
+                    shared_languages=shared_languages,
+                    faculty_languages=faculty_langs
                 )
 
                 matched_slots.append(MatchedSlot(
@@ -441,6 +473,9 @@ def find_matching_slots(
                     office_hour_id=oh.id,
                     faculty_id=faculty.id,
                     faculty_name=faculty.name,
+                    faculty_languages=faculty_langs,
+                    shared_languages=shared_languages,
+                    language_match_label=lang_match_label,
                     location=oh.location,
                     capacity=oh.capacity,
                     current_bookings=current_active_bookings,
@@ -504,7 +539,9 @@ def find_matching_slots(
                     capacity=1,
                     can_auto_confirm=False, # Layer 1 is NEVER auto-confirmed!
                     student_class_intervals=student_classes,
-                    is_on_demand=True
+                    is_on_demand=True,
+                    shared_languages=shared_languages,
+                    faculty_languages=faculty_langs
                 )
 
                 matched_slots.append(MatchedSlot(
@@ -515,6 +552,9 @@ def find_matching_slots(
                     office_hour_id=None,
                     faculty_id=faculty.id,
                     faculty_name=faculty.name,
+                    faculty_languages=faculty_langs,
+                    shared_languages=shared_languages,
+                    language_match_label=lang_match_label,
                     location="Faculty Cabin (To be confirmed)",
                     capacity=1,
                     current_bookings=0,
@@ -532,3 +572,86 @@ def find_matching_slots(
     # Sort descending by score
     matched_slots.sort(key=lambda s: s.score, reverse=True)
     return matched_slots
+
+
+def recommend_faculty_for_student(
+    session: Session,
+    student_id: int,
+    course_id: Optional[int] = None
+) -> List[dict]:
+    """
+    Ranks faculty for a student based on:
+    1. Teaching relevance (teaches course or belongs to student's department)
+    2. Language compatibility: prioritises faculty sharing >= 1 language with student
+    3. Availability: published recurring office hours
+    Strictly transparent rules, zero paid AI APIs.
+    Never hides faculty who lack language overlap.
+    """
+    from app.models import UserRole, FacultyCourse
+
+    student = session.get(User, student_id)
+    if not student:
+        return []
+
+    student_langs = student.languages
+    student_langs_lower = {l.strip().lower(): l.strip() for l in student_langs}
+
+    faculty_list = session.exec(select(User).where(User.role == UserRole.FACULTY.value)).all()
+    results = []
+
+    for fac in faculty_list:
+        stmt_fc = select(FacultyCourse).where(FacultyCourse.faculty_id == fac.id)
+        fc_records = session.exec(stmt_fc).all()
+        taught_course_ids = {fc.course_id for fc in fc_records}
+        courses = [session.get(Course, cid) for cid in taught_course_ids if session.get(Course, cid)]
+
+        stmt_oh = select(OfficeHour).where(OfficeHour.faculty_id == fac.id)
+        office_hours = session.exec(stmt_oh).all()
+
+        fac_langs = fac.languages
+        shared = [fl.strip() for fl in fac_langs if fl.strip().lower() in student_langs_lower]
+
+        score = 0.0
+        reasons = []
+
+        # 1. Course / Department Relevance
+        if course_id:
+            if course_id in taught_course_ids:
+                score += 50.0
+                c_obj = session.get(Course, course_id)
+                reasons.append(f"Teaches course {c_obj.code if c_obj else ''}")
+            elif fac.department == student.department:
+                score += 20.0
+                reasons.append(f"Department faculty ({fac.department.split('&')[0].strip()})")
+        else:
+            if fac.department == student.department:
+                score += 30.0
+                reasons.append(f"Department faculty ({fac.department.split('&')[0].strip()})")
+
+        # 2. Language Compatibility
+        if shared:
+            score += 25.0
+            reasons.append(f"Shared language: {', '.join(shared)}")
+        else:
+            reasons.append(f"Speaks: {', '.join(fac_langs)} (no language overlap)")
+
+        # 3. Office Hours Presence
+        if office_hours:
+            score += 15.0
+            reasons.append(f"{len(office_hours)} office hour window(s)")
+
+        explanation = "; ".join(reasons)
+        results.append({
+            "faculty": fac,
+            "courses": courses,
+            "office_hours": office_hours,
+            "has_office_hours": len(office_hours) > 0,
+            "shared_languages": shared,
+            "has_language_match": len(shared) > 0,
+            "faculty_languages": fac_langs,
+            "score": round(score, 1),
+            "recommendation_reason": explanation
+        })
+
+    results.sort(key=lambda x: x["score"], reverse=True)
+    return results

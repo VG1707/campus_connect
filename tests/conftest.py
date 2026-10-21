@@ -9,7 +9,8 @@ from sqlmodel.pool import StaticPool
 
 from app.models import (
     User, UserRole, Course, FacultyCourse, AcademicCalendar,
-    TimetableEntry, OfficeHour, MeetingRequest, ScheduleChange
+    TimetableEntry, OfficeHour, MeetingRequest, ScheduleChange,
+    TopicPrerequisite
 )
 from app.calendar_engine import set_calendar_mode, MODE_DAY_ORDER
 from seed_data import seed_all_data

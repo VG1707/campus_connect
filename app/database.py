@@ -50,6 +50,18 @@ def init_db(target_engine=None, auto_seed: bool = True) -> None:
     use_engine = target_engine or engine
     SQLModel.metadata.create_all(use_engine)
 
+    # Safe column migration for SQLite if existing database lacks newly added columns
+    try:
+        from sqlalchemy import text
+        with use_engine.connect() as conn:
+            res = conn.execute(text("PRAGMA table_info(user)")).fetchall()
+            col_names = [r[1] for r in res] if res else []
+            if "languages_json" not in col_names and col_names:
+                conn.execute(text("ALTER TABLE user ADD COLUMN languages_json TEXT DEFAULT '[\"English\"]'"))
+                conn.commit()
+    except Exception:
+        pass
+
     if auto_seed:
         with Session(use_engine) as session:
             has_users = session.exec(select(User)).first() is not None

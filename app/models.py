@@ -83,6 +83,31 @@ class User(SQLModel, table=True):
     semester: Optional[int] = None                   # e.g., 3 for 2nd-year students
     no_show_count: int = Field(default=0)            # 2 no-shows trigger automated booking block
     is_blocked: bool = Field(default=False)          # Admin reset flag
+    languages_json: str = Field(default='["English"]') # JSON list: e.g. '["English", "Tamil"]'
+
+    @property
+    def languages(self) -> List[str]:
+        """Convenience helper to read preferred/fluent languages as a Python list."""
+        try:
+            val = json.loads(self.languages_json)
+            if isinstance(val, list) and val:
+                return val
+            return ["English"]
+        except Exception:
+            return ["English"]
+
+    def set_languages(self, langs: List[str]) -> None:
+        """Convenience helper to store normalized languages as a JSON string."""
+        cleaned = []
+        seen_lower = set()
+        for l in langs:
+            s = l.strip()
+            if s and s.lower() not in seen_lower:
+                seen_lower.add(s.lower())
+                cleaned.append(s.title())
+        if not cleaned:
+            cleaned = ["English"]
+        self.languages_json = json.dumps(cleaned)
 
 
 class Course(SQLModel, table=True):
@@ -115,6 +140,20 @@ class FacultyCourse(SQLModel, table=True):
     faculty_id: int = Field(foreign_key="user.id", index=True)
     course_id: int = Field(foreign_key="course.id", index=True)
     section: Optional[str] = None                    # e.g., "CSE-A"
+
+
+class TopicPrerequisite(SQLModel, table=True):
+    """
+    Synthetic topic-to-prerequisite mapping.
+    Helps students identify foundational concepts to review before a consultation.
+    Strictly deterministic and editable: zero paid AI APIs.
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    course_id: Optional[int] = Field(default=None, foreign_key="course.id", index=True)
+    subject_code: Optional[str] = Field(default=None, index=True) # e.g. "CS201", "EC201"
+    topic: str = Field(index=True)                              # e.g. "Binary Trees"
+    prerequisite_topic: str                                     # e.g. "Pointers in C"
+    explanation: str                                            # Rationale why relevant
 
 
 class AcademicCalendar(SQLModel, table=True):

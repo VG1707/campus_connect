@@ -26,11 +26,11 @@
   </div>
 
   <!-- Search & Filter Controls -->
-  <form method="GET" action="/faculty-directory" class="bg-white p-5 rounded-3xl border border-[#EADBCE] shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+  <form method="GET" action="/faculty-directory" class="bg-white p-5 rounded-3xl border border-[#EADBCE] shadow-sm grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
     <!-- Keyword Search -->
     <div class="md:col-span-2">
       <label class="block text-xs font-semibold text-[#20120B] mb-1.5">Search Faculty, Subject, or Topic</label>
-      <input type="text" name="search" value="{{ current_search }}" placeholder="e.g. Dr. Raman, Binary Trees, CS201..."
+      <input type="text" name="search" value="{{ current_search }}" placeholder="e.g. Dr. Raman, Binary Trees, Tamil..."
         class="w-full text-xs rounded-xl border border-[#EADBCE] bg-[#FBF8F3] px-3.5 py-2.5 text-[#20120B] focus:outline-none focus:border-[#BA5624] placeholder-[#A69588]">
     </div>
 
@@ -45,12 +45,23 @@
       </select>
     </div>
 
+    <!-- Language Filter -->
+    <div>
+      <label class="block text-xs font-semibold text-[#20120B] mb-1.5">Language</label>
+      <select name="language" class="w-full text-xs rounded-xl border border-[#EADBCE] bg-[#FBF8F3] px-3.5 py-2.5 text-[#20120B] focus:outline-none focus:border-[#BA5624]">
+        <option value="All" {% if current_language == 'All' %}selected{% endif %}>All Languages</option>
+        {% for l in all_languages %}
+          <option value="{{ l }}" {% if current_language == l %}selected{% endif %}>{{ l }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
     <!-- Filter Buttons -->
     <div class="flex items-center space-x-2">
-      <button type="submit" class="btn-terracotta btn-glow flex-1 font-semibold text-xs py-2.5 px-4 rounded-full shadow-sm">
+      <button type="submit" class="btn-terracotta btn-glow flex-1 font-semibold text-xs py-2.5 px-4 rounded-full shadow-sm cursor-pointer">
         Filter
       </button>
-      <a href="/faculty-directory" class="btn-secondary-warm btn-glow-subtle text-xs text-[#7A695E] px-3.5 py-2 rounded-full">
+      <a href="/faculty-directory" class="btn-secondary-warm btn-glow-subtle text-xs text-[#7A695E] px-3.5 py-2 rounded-full cursor-pointer">
         Reset
       </a>
     </div>
@@ -73,6 +84,26 @@
             <span class="w-10 h-10 rounded-full bg-[#F3EDE2] text-[#BA5624] flex items-center justify-center text-lg shrink-0">
               👩‍🏫
             </span>
+          </div>
+
+          <!-- Fluent Languages & Compatibility -->
+          <div class="mt-3 flex flex-wrap items-center gap-1.5 text-xs">
+            <span class="text-[11px] font-semibold text-[#7A695E]">🗣️ Fluent:</span>
+            {% for l in f.languages %}
+              <span class="inline-block text-[11px] font-medium px-2 py-0.5 rounded-md {% if l in item.shared_languages %}bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold{% else %}bg-[#FBF8F3] text-[#5C4D44] border border-[#EADBCE]{% endif %}">
+                {{ l }}
+              </span>
+            {% endfor %}
+            {% if item.has_language_match %}
+              <span class="badge-warm bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold">
+                ✓ Shared Language
+              </span>
+            {% endif %}
+          </div>
+
+          <!-- Recommendation Reason -->
+          <div class="mt-2 text-[11px] text-[#7A695E] bg-[#FBF8F3] p-2 rounded-xl border border-[#EADBCE]">
+            <strong>Why Recommended:</strong> {{ item.recommendation_reason }}
           </div>
 
           <!-- Courses & Topics -->

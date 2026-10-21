@@ -11,13 +11,13 @@ import os
 import time
 import shutil
 from pathlib import Path
-from fastapi import APIRouter, Request, Depends, Form, HTTPException, UploadFile, File, Response
+from fastapi import APIRouter, Request, Depends, Form, Query, HTTPException, UploadFile, File, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlmodel import Session, select
 
 from app.database import get_session, record_audit, send_notification
 from app.models import (
-    User, UserRole, Course, OfficeHour, MeetingRequest,
+    User, UserRole, Course, FacultyCourse, OfficeHour, MeetingRequest,
     TimetableEntry, RequestState, RequestSource, GroupSession, GroupSessionState,
     ScheduleChange, ScheduleChangeKind, VerificationStatus, ExtractionLog
 )
@@ -31,16 +31,157 @@ from app.group_sessions import (
 router = APIRouter(prefix="/faculty", tags=["faculty"])
 
 
+def compute_common_doubt_topics(
+    session: Session,
+    department: Optional[str] = None,
+    course_id: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    faculty_id: Optional[int] = None
+) -> List[dict]:
+    """
+    Count consultation requests grouped by subject and topic.
+    Ranks topics from most requested to least requested.
+    Group and filter results by department, course, and date range.
+    Counting rules:
+      - Primary ranking counts: pending, confirmed, completed, no_show.
+      - Explicitly excludes: cancelled, rejected.
+      - Distinguishes total request count from unique students.
+      - Handles missing subject or topic information without guessing.
+      - Prioritises topics relevant to faculty's department & teaching subjects.
+    """
+    valid_states = [
+        RequestState.PENDING.value,
+        RequestState.CONFIRMED.value,
+        RequestState.COMPLETED.value,
+        RequestState.NO_SHOW.value
+    ]
+
+    stmt = select(MeetingRequest).where(MeetingRequest.state.in_(valid_states))
+
+    if start_date and start_date.strip():
+        stmt = stmt.where(MeetingRequest.created_at >= f"{start_date.strip()}T00:00:00")
+    if end_date and end_date.strip():
+        stmt = stmt.where(MeetingRequest.created_at <= f"{end_date.strip()}T23:59:59")
+    if course_id and course_id != "All" and course_id.strip():
+        try:
+            cid = int(course_id)
+            stmt = stmt.where(MeetingRequest.course_id == cid)
+        except ValueError:
+            pass
+
+    requests = session.exec(stmt).all()
+
+    # Pre-fetch faculty course IDs and department for personalization
+    faculty_course_ids = set()
+    faculty_dept = ""
+    if faculty_id:
+        f_user = session.get(User, faculty_id)
+        if f_user:
+            faculty_dept = f_user.department
+        stmt_fc = select(FacultyCourse).where(FacultyCourse.faculty_id == faculty_id)
+        faculty_course_ids = {fc.course_id for fc in session.exec(stmt_fc).all()}
+
+    # Group requests
+    groups = {}
+    for r in requests:
+        course = session.get(Course, r.course_id) if r.course_id else None
+
+        # Department filter check
+        if department and department != "All" and department.strip():
+            course_dept = course.department if course else ""
+            if course_dept != department.strip():
+                continue
+
+        topic_str = (r.topic_tag or "").strip()
+        if not topic_str:
+            topic_display = "Unspecified Topic (General Doubt)"
+        else:
+            topic_display = topic_str
+
+        key = (r.course_id, topic_display.lower())
+        if key not in groups:
+            groups[key] = {
+                "course_id": r.course_id,
+                "course": course,
+                "topic": topic_display,
+                "requests": []
+            }
+        groups[key]["requests"].append(r)
+
+    results = []
+    cutoff_dt = (datetime.now() - timedelta(days=7)).isoformat()
+
+    for (cid, _), g in groups.items():
+        req_list = g["requests"]
+        total_reqs = len(req_list)
+        unique_students = len({r.student_id for r in req_list})
+
+        pending_c = sum(1 for r in req_list if r.state == RequestState.PENDING.value)
+        confirmed_c = sum(1 for r in req_list if r.state == RequestState.CONFIRMED.value)
+        completed_c = sum(1 for r in req_list if r.state == RequestState.COMPLETED.value)
+        no_show_c = sum(1 for r in req_list if r.state == RequestState.NO_SHOW.value)
+
+        recent_c = sum(1 for r in req_list if r.created_at >= cutoff_dt)
+        trend = f"+{recent_c} this week" if recent_c > 0 else "Consistent demand"
+
+        c = g["course"]
+        is_my_subject = (cid in faculty_course_ids) if cid else False
+        is_my_dept = (c.department == faculty_dept) if (c and faculty_dept) else False
+
+        results.append({
+            "course_id": cid,
+            "course_code": c.code if c else "GEN",
+            "course_name": c.name if c else "General Academic Inquiries",
+            "department": c.department if c else "General",
+            "topic": g["topic"],
+            "total_requests": total_reqs,
+            "unique_students": unique_students,
+            "status_breakdown": {
+                "pending": pending_c,
+                "confirmed": confirmed_c,
+                "completed": completed_c,
+                "no_show": no_show_c
+            },
+            "trend_label": trend,
+            "is_my_subject": is_my_subject,
+            "is_my_dept": is_my_dept
+        })
+
+    # Sort topics:
+    # 1. Faculty's own teaching subjects first
+    # 2. Total requests descending
+    # 3. Unique students descending
+    results.sort(
+        key=lambda x: (
+            1 if x["is_my_subject"] else (0.5 if x["is_my_dept"] else 0),
+            x["total_requests"],
+            x["unique_students"]
+        ),
+        reverse=True
+    )
+
+    for idx, item in enumerate(results, 1):
+        item["rank"] = idx
+
+    return results
+
+
 @router.get("/inbox", response_class=HTMLResponse)
 def faculty_inbox(
     request: Request,
+    department: Optional[str] = Query(None),
+    course_id: Optional[str] = Query(None),
+    from_date: Optional[str] = Query(None),
+    to_date: Optional[str] = Query(None),
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     """
     Faculty Inbox: Review pending consultation inquiries,
     upcoming confirmed meetings, manage student attendance (no-shows),
-    and approve/decline suggested cohort group sessions.
+    approve/decline suggested cohort group sessions, and review
+    Common Doubt Topics analytics.
     """
     from app.main import templates
 
@@ -83,14 +224,97 @@ def faculty_inbox(
         else:
             history_list.append(item)
 
+    # Common Doubt Topics Analytics
+    common_doubt_topics = compute_common_doubt_topics(
+        session=session,
+        department=department,
+        course_id=course_id,
+        start_date=from_date,
+        end_date=to_date,
+        faculty_id=current_user.id
+    )
+
+    dept_stmt = select(Course.department).distinct()
+    departments = sorted(list(session.exec(dept_stmt).all()))
+    all_courses = session.exec(select(Course).order_by(Course.code)).all()
+
     ctx = get_base_context(request, current_user, session)
     ctx.update({
         "suggested_display": suggested_display,
         "pending_list": pending_list,
         "confirmed_list": confirmed_list,
-        "history_list": history_list
+        "history_list": history_list,
+        "common_doubt_topics": common_doubt_topics,
+        "departments": departments,
+        "all_courses": all_courses,
+        "selected_dept": department or "All",
+        "selected_course_id": course_id or "All",
+        "filter_from_date": from_date or "",
+        "filter_to_date": to_date or ""
     })
     return templates.TemplateResponse(request=request, name="faculty/inbox.html", context=ctx)
+
+
+@router.get("/common-doubts-partial", response_class=HTMLResponse)
+def common_doubts_partial(
+    request: Request,
+    department: Optional[str] = Query(None),
+    course_id: Optional[str] = Query(None),
+    from_date: Optional[str] = Query(None),
+    to_date: Optional[str] = Query(None),
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    """
+    HTMX endpoint returning the filtered Common Doubt Topics list.
+    """
+    from app.main import templates
+
+    topics = compute_common_doubt_topics(
+        session=session,
+        department=department,
+        course_id=course_id,
+        start_date=from_date,
+        end_date=to_date,
+        faculty_id=current_user.id
+    )
+
+    return templates.TemplateResponse(
+        request=request,
+        name="faculty/common_doubts_partial.html",
+        context={
+            "common_doubt_topics": topics,
+            "current_user": current_user
+        }
+    )
+
+
+@router.post("/profile/languages")
+def update_faculty_languages(
+    request: Request,
+    languages: str = Form(...),
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    """
+    Allow faculty to update the languages they are fluent in.
+    """
+    lang_list = [l.strip() for l in languages.split(",") if l.strip()]
+    if not lang_list:
+        lang_list = ["English"]
+    current_user.set_languages(lang_list)
+    session.add(current_user)
+    session.commit()
+    session.refresh(current_user)
+    record_audit(
+        session=session,
+        action="UPDATE_FACULTY_LANGUAGES",
+        entity_type="User",
+        entity_id=current_user.id,
+        details=f"Updated fluent languages to: {', '.join(current_user.languages)}"
+    )
+    referer = request.headers.get("referer") or "/faculty/inbox"
+    return RedirectResponse(url=referer, status_code=303)
 
 
 @router.post("/group-sessions/{gs_id}/host")

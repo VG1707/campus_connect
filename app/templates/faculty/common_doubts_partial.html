@@ -1,0 +1,122 @@
+<!-- HTMX Partial: Common Doubt Topics Rankings Table/Cards -->
+<div id="common-doubts-results" class="space-y-4">
+  {% if common_doubt_topics %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="border-b border-warm-border text-warm-muted font-bold uppercase tracking-wider text-[11px] bg-warm-subtle/30">
+            <th class="py-3 px-3.5">Rank</th>
+            <th class="py-3 px-4">Subject & Course</th>
+            <th class="py-3 px-4">Doubt Topic / Concept</th>
+            <th class="py-3 px-3.5 text-center">Total Inquiries</th>
+            <th class="py-3 px-3.5 text-center">Unique Students</th>
+            <th class="py-3 px-4">Lifecycle Breakdown</th>
+            <th class="py-3 px-3.5 text-center">Recent Trend</th>
+            <th class="py-3 px-3.5 text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-warm-border/60">
+          {% for t in common_doubt_topics %}
+            <tr class="hover:bg-warm-subtle/40 transition {% if t.is_my_subject %}bg-amber-50/40{% endif %}">
+              <!-- Rank -->
+              <td class="py-3.5 px-3.5 font-bold text-espresso">
+                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full {% if t.rank == 1 %}bg-terracotta text-white font-serif{% elif t.rank <= 3 %}bg-amberwarm-light text-espresso font-semibold border border-amberwarm/40{% else %}bg-warm-subtle text-warm-muted{% endif %} text-[11px]">
+                  #{{ t.rank }}
+                </span>
+              </td>
+
+              <!-- Subject & Course -->
+              <td class="py-3.5 px-4">
+                <div class="font-bold text-espresso flex items-center space-x-1.5">
+                  <span>{{ t.course_code }}</span>
+                  {% if t.is_my_subject %}
+                    <span class="badge-warm bg-terracotta/10 text-terracotta border border-terracotta/20 text-[10px] font-bold">Your Subject</span>
+                  {% endif %}
+                </div>
+                <div class="text-[11px] text-warm-muted leading-tight mt-0.5 max-w-xs truncate" title="{{ t.course_name }}">
+                  {{ t.course_name }}
+                </div>
+                <div class="text-[10px] text-warm-muted/80">
+                  {{ t.department }}
+                </div>
+              </td>
+
+              <!-- Doubt Concept -->
+              <td class="py-3.5 px-4">
+                <span class="font-serif font-bold text-espresso text-sm block">
+                  {{ t.topic }}
+                </span>
+                <span class="text-[10px] text-warm-muted">Student-reported consultation topic</span>
+              </td>
+
+              <!-- Total Requests -->
+              <td class="py-3.5 px-3.5 text-center">
+                <span class="inline-block px-2.5 py-1 rounded-xl bg-warm-subtle font-bold text-espresso text-xs border border-warm-border">
+                  {{ t.total_requests }}
+                </span>
+              </td>
+
+              <!-- Unique Students -->
+              <td class="py-3.5 px-3.5 text-center">
+                <span class="inline-block px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-900 font-bold text-xs border border-emerald-200">
+                  👥 {{ t.unique_students }}
+                </span>
+              </td>
+
+              <!-- Status Breakdown -->
+              <td class="py-3.5 px-4">
+                <div class="flex flex-wrap items-center gap-1.5 text-[10px]">
+                  {% if t.status_breakdown.pending > 0 %}
+                    <span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 font-medium" title="Pending faculty review">
+                      {{ t.status_breakdown.pending }} Pending
+                    </span>
+                  {% endif %}
+                  {% if t.status_breakdown.confirmed > 0 %}
+                    <span class="px-2 py-0.5 rounded-md bg-sky-100 text-sky-900 font-medium" title="Confirmed consultation">
+                      {{ t.status_breakdown.confirmed }} Confirmed
+                    </span>
+                  {% endif %}
+                  {% if t.status_breakdown.completed > 0 %}
+                    <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 font-medium" title="Completed session">
+                      {{ t.status_breakdown.completed }} Completed
+                    </span>
+                  {% endif %}
+                  {% if t.status_breakdown.no_show > 0 %}
+                    <span class="px-2 py-0.5 rounded-md bg-red-100 text-red-900 font-medium" title="Student missed slot">
+                      {{ t.status_breakdown.no_show }} No-Show
+                    </span>
+                  {% endif %}
+                </div>
+                <div class="text-[10px] text-warm-muted/70 mt-0.5 italic">
+                  *Cancelled & rejected excluded
+                </div>
+              </td>
+
+              <!-- Trend -->
+              <td class="py-3.5 px-3.5 text-center">
+                <span class="inline-block px-2 py-0.5 rounded-lg bg-warm-subtle text-espresso text-[11px] font-medium border border-warm-border">
+                  {{ t.trend_label }}
+                </span>
+              </td>
+
+              <!-- Action -->
+              <td class="py-3.5 px-3.5 text-right">
+                <a href="/faculty/office-hours" class="btn-secondary-warm btn-glow-subtle text-[11px] font-semibold px-3 py-1.5 rounded-full inline-block shadow-2xs whitespace-nowrap">
+                  Plan Review &rarr;
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="p-8 text-center text-warm-muted bg-warm-subtle/30 rounded-2xl border border-warm-border space-y-2">
+      <p class="text-2xl">📋</p>
+      <p class="font-serif text-sm font-bold text-espresso">No Consultation Requests Found</p>
+      <p class="text-xs text-warm-muted max-w-md mx-auto">
+        No active or historical consultation requests match the selected filters. Note: Cancelled and rejected requests are excluded from primary rankings.
+      </p>
+    </div>
+  {% endif %}
+</div>

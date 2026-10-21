@@ -40,6 +40,22 @@
         1. Select Professor & Topic
       </h2>
 
+      <!-- Student Preferred Languages Bar -->
+      <div class="p-3 bg-warm-subtle/50 rounded-2xl border border-warm-border text-xs flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center space-x-2">
+          <span class="text-base">🗣️</span>
+          <div>
+            <span class="font-bold text-espresso">Your Preferred Languages:</span>
+            <span class="text-warm-muted">{{ current_user.languages | join(', ') }}</span>
+          </div>
+        </div>
+        <form method="POST" action="/student/profile/languages" class="flex items-center space-x-1.5">
+          <input type="text" name="languages" value="{{ current_user.languages | join(', ') }}" placeholder="e.g. English, Tamil"
+            class="text-[11px] rounded-lg border border-warm-border px-2 py-1 bg-white text-espresso w-36 focus:ring-1 focus:ring-terracotta">
+          <button type="submit" class="btn-secondary-warm text-[10px] font-semibold px-2 py-1 rounded-lg cursor-pointer">Save</button>
+        </form>
+      </div>
+
       <form id="booking-params" class="space-y-4">
         
         <!-- Faculty Selector -->
@@ -48,15 +64,35 @@
           <select id="faculty-select" name="faculty_id" onchange="window.location.href='/student/book/' + this.value"
             class="w-full text-xs rounded-xl border border-warm-border p-3 bg-white text-espresso focus:ring-2 focus:ring-terracotta focus:outline-none cursor-pointer">
             <option value="">-- Choose a Professor --</option>
-            {% for f in all_faculty %}
+            {% for rec in faculty_recommendations %}
+              {% set f = rec.faculty %}
               <option value="{{ f.id }}" {% if selected_faculty and selected_faculty.id == f.id %}selected{% endif %}>
-                {{ f.name }} ({{ f.department.split('&')[0].strip() }})
+                {{ f.name }} ({{ f.department.split('&')[0].strip() }}) &bull; Speaks: {{ f.languages | join(', ') }} {% if rec.has_language_match %}★ (Shared Language){% endif %}
               </option>
             {% endfor %}
           </select>
         </div>
 
         {% if selected_faculty %}
+          <!-- Faculty Profile & Language Compatibility Card -->
+          <div class="p-3.5 rounded-2xl border text-xs space-y-1.5 {% if selected_shared_languages %}bg-emerald-50/70 border-emerald-200 text-emerald-950{% else %}bg-warm-subtle/50 border-warm-border text-espresso{% endif %}">
+            <div class="flex items-center justify-between">
+              <span class="font-bold">🗣️ Professor Speaks: {{ selected_faculty.languages | join(', ') }}</span>
+              {% if selected_shared_languages %}
+                <span class="badge-warm bg-emerald-100 text-emerald-900 border border-emerald-200 text-[10px] font-bold">
+                  Shared: {{ selected_shared_languages | join(', ') }}
+                </span>
+              {% else %}
+                <span class="badge-warm bg-warm-subtle text-warm-muted border border-warm-border text-[10px]">
+                  No shared language (fully available)
+                </span>
+              {% endif %}
+            </div>
+            <p class="text-[11px] text-warm-muted leading-relaxed">
+              <strong>Match explanation:</strong> {{ selected_recommendation_reason or 'Transparent availability and subject ranking.' }}
+            </p>
+          </div>
+
           <!-- Course Selector -->
           <div>
             <label class="block text-xs font-bold text-espresso mb-1">Course *</label>
@@ -74,6 +110,14 @@
             <label class="block text-xs font-bold text-espresso mb-1">Topic or Doubt Concept *</label>
             <input type="text" name="topic_tag" id="topic_tag" placeholder="e.g. Binary Trees, Lab 2 Pointer Bug..." value="Binary Trees"
               class="w-full text-xs rounded-xl border border-warm-border p-3 bg-white text-espresso focus:ring-2 focus:ring-terracotta focus:outline-none" required>
+
+            <!-- HTMX Prerequisite Suggestions Container -->
+            <div id="prerequisites-container"
+              hx-get="/student/prerequisites-suggest"
+              hx-trigger="load, keyup changed delay:300ms from:#topic_tag, change from:#course_id"
+              hx-include="#course_id, #topic_tag"
+              class="mt-1">
+            </div>
           </div>
 
           <!-- Request Category -->

@@ -17,11 +17,11 @@ from app.database import get_session, record_audit, send_notification
 from app.models import (
     User, UserRole, Course, FacultyCourse, OfficeHour, MeetingRequest,
     TimetableEntry, ExtractionLog, RequestState, RequestSource, RequestType,
-    ScheduleChange, ScheduleChangeKind, VerificationStatus
+    ScheduleChange, ScheduleChangeKind, VerificationStatus, TopicPrerequisite
 )
 from app.auth_mock import get_current_user
 from app.routers.common import get_base_context
-from app.matching import find_matching_slots, MatchingError
+from app.matching import find_matching_slots, MatchingError, recommend_faculty_for_student
 from app.calendar_engine import DEFAULT_PERIOD_TIMINGS
 from app.extractor.mock_extractor import MockTimetableExtractor
 
@@ -85,12 +85,14 @@ def book_consultation_form(
     """
     from app.main import templates
 
-    # All faculty
-    stmt_f = select(User).where(User.role == UserRole.FACULTY.value).order_by(User.name)
-    all_faculty = session.exec(stmt_f).all()
+    # Ranked faculty recommendations considering subject, language compatibility, and office hours
+    recommendations = recommend_faculty_for_student(session, current_user.id)
+    all_faculty = [r["faculty"] for r in recommendations]
 
     selected_faculty = None
     faculty_courses = []
+    selected_shared_languages = []
+    selected_recommendation_reason = ""
     if faculty_id:
         selected_faculty = session.get(User, faculty_id)
         if selected_faculty:
@@ -100,6 +102,16 @@ def book_consultation_form(
                 c = session.get(Course, fc.course_id)
                 if c:
                     faculty_courses.append(c)
+
+            student_langs_lower = {l.strip().lower() for l in current_user.languages}
+            selected_shared_languages = [
+                l.strip() for l in selected_faculty.languages
+                if l.strip().lower() in student_langs_lower
+            ]
+            for r in recommendations:
+                if r["faculty"].id == selected_faculty.id:
+                    selected_recommendation_reason = r["recommendation_reason"]
+                    break
 
     # Check student timetable presence
     stmt_tt = select(TimetableEntry).where(TimetableEntry.owner_id == current_user.id)
@@ -112,13 +124,136 @@ def book_consultation_form(
     ctx = get_base_context(request, current_user, session)
     ctx.update({
         "all_faculty": all_faculty,
+        "faculty_recommendations": recommendations,
         "selected_faculty": selected_faculty,
         "faculty_courses": faculty_courses,
+        "selected_shared_languages": selected_shared_languages,
+        "selected_recommendation_reason": selected_recommendation_reason,
         "has_timetable": has_timetable,
         "default_from": default_from,
         "default_to": default_to
     })
     return templates.TemplateResponse(request=request, name="student/book.html", context=ctx)
+
+
+import re
+
+
+def _topic_matches(mapping_topic: str, query: str) -> bool:
+    """
+    Transparent, deterministic topic matcher that handles case variations,
+    plurals, substrings, and token overlap without external AI services.
+    """
+    m_lower = mapping_topic.lower().strip()
+    q_lower = query.lower().strip()
+    if m_lower in q_lower or q_lower in m_lower:
+        return True
+
+    m_words = [w for w in re.findall(r'[a-zA-Z0-9]+', m_lower) if len(w) > 1]
+    q_words = [w for w in re.findall(r'[a-zA-Z0-9]+', q_lower) if len(w) > 1]
+    if not m_words or not q_words:
+        return False
+
+    def word_match(w1: str, w2: str) -> bool:
+        if w1 == w2:
+            return True
+        if len(w1) >= 3 and len(w2) >= 3:
+            return w1.startswith(w2) or w2.startswith(w1) or w1 in w2 or w2 in w1
+        return False
+
+    m_matches = sum(1 for mw in m_words if any(word_match(mw, qw) for qw in q_words))
+    q_matches = sum(1 for qw in q_words if any(word_match(qw, mw) for mw in m_words))
+
+    if m_matches == len(m_words) or q_matches == len(q_words):
+        return True
+    if m_matches >= 2 or q_matches >= 2:
+        return True
+    return False
+
+
+@router.get("/prerequisites-suggest", response_class=HTMLResponse)
+def suggest_prerequisites(
+    request: Request,
+    course_id: Optional[int] = Query(None),
+    topic: Optional[str] = Query(None),
+    session: Session = Depends(get_session)
+):
+    """
+    Suggest prerequisite concepts that a student might find helpful to review
+    before their consultation.
+    Based on subject/topic and editable database mappings (TopicPrerequisite).
+    Zero paid AI API: fully transparent, non-blocking.
+    """
+    from app.main import templates
+
+    if not topic or not topic.strip():
+        return HTMLResponse("")
+
+    clean_topic = topic.strip()
+
+    # Query database mappings
+    matched = []
+    if course_id:
+        stmt = select(TopicPrerequisite).where(TopicPrerequisite.course_id == course_id)
+        prereqs = session.exec(stmt).all()
+        matched = [
+            p for p in prereqs
+            if _topic_matches(p.topic, clean_topic)
+        ]
+
+    if not matched:
+        all_p = session.exec(select(TopicPrerequisite)).all()
+        matched = [
+            p for p in all_p
+            if _topic_matches(p.topic, clean_topic)
+        ]
+
+    # De-duplicate by prerequisite_topic
+    unique_matched = []
+    seen = set()
+    for m in matched:
+        key = m.prerequisite_topic.strip().lower()
+        if key not in seen:
+            seen.add(key)
+            unique_matched.append(m)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="student/prerequisites_partial.html",
+        context={
+            "matched_prerequisites": unique_matched,
+            "topic_query": topic.strip(),
+            "has_mappings": len(unique_matched) > 0
+        }
+    )
+
+
+@router.post("/profile/languages")
+def update_student_languages(
+    request: Request,
+    languages: str = Form(...),
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    """
+    Allow students to update their preferred consultation languages.
+    """
+    lang_list = [l.strip() for l in languages.split(",") if l.strip()]
+    if not lang_list:
+        lang_list = ["English"]
+    current_user.set_languages(lang_list)
+    session.add(current_user)
+    session.commit()
+    session.refresh(current_user)
+    record_audit(
+        session=session,
+        action="UPDATE_STUDENT_LANGUAGES",
+        entity_type="User",
+        entity_id=current_user.id,
+        details=f"Updated preferred languages to: {', '.join(current_user.languages)}"
+    )
+    referer = request.headers.get("referer") or "/student/dashboard"
+    return RedirectResponse(url=referer, status_code=303)
 
 
 @router.get("/slots-search", response_class=HTMLResponse)

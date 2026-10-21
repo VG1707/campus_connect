@@ -18,7 +18,8 @@ from app.database import engine, init_db, record_audit
 from app.models import (
     User, UserRole, Course, FacultyCourse, AcademicCalendar,
     TimetableEntry, OfficeHour, MeetingRequest, ScheduleChange,
-    RequestState, RequestSource, VerificationStatus, ScheduleChangeKind
+    RequestState, RequestSource, VerificationStatus, ScheduleChangeKind,
+    TopicPrerequisite
 )
 from app.calendar_engine import set_calendar_mode, MODE_DAY_ORDER
 
@@ -28,10 +29,9 @@ def seed_all_data(session: Session, reset_existing: bool = True) -> dict:
     if reset_existing:
         # Clear tables cleanly in reverse dependency order
         for model in [
-            MeetingRequest, TimetableEntry, OfficeHour, FacultyCourse,
+            TopicPrerequisite, MeetingRequest, TimetableEntry, OfficeHour, FacultyCourse,
             ScheduleChange, AcademicCalendar, Course, User
         ]:
-            session.exec(select(model)).all()
             for obj in session.exec(select(model)).all():
                 session.delete(obj)
         session.commit()
@@ -44,41 +44,42 @@ def seed_all_data(session: Session, reset_existing: bool = True) -> dict:
         name="Dean Academic Office (Admin)",
         role=UserRole.ADMIN.value,
         department="Academic Administration",
-        email="admin@campusconnect.edu"
+        email="admin@campusconnect.edu",
+        languages_json=json.dumps(["English", "Hindi"])
     )
     session.add(admin)
 
-    # 12 Faculty (4 CSE, 4 ECE, 4 MECH)
+    # 12 Faculty (4 CSE, 4 ECE, 4 MECH) with realistic fluent languages
     faculty_members = [
         # CSE
-        User(name="Dr. Rajesh Raman", role=UserRole.FACULTY.value, department="Computer Science & Engineering", email="rajesh.raman@campusconnect.edu"),
-        User(name="Dr. Anita Sharma", role=UserRole.FACULTY.value, department="Computer Science & Engineering", email="anita.sharma@campusconnect.edu"),
-        User(name="Prof. Vikram Iyer", role=UserRole.FACULTY.value, department="Computer Science & Engineering", email="vikram.iyer@campusconnect.edu"),
-        User(name="Dr. K. Meenakshi", role=UserRole.FACULTY.value, department="Computer Science & Engineering", email="meenakshi.k@campusconnect.edu"),
+        User(name="Dr. Rajesh Raman", role=UserRole.FACULTY.value, department="Computer Science & Engineering", email="rajesh.raman@campusconnect.edu", languages_json=json.dumps(["English", "Tamil"])),
+        User(name="Dr. Anita Sharma", role=UserRole.FACULTY.value, department="Computer Science & Engineering", email="anita.sharma@campusconnect.edu", languages_json=json.dumps(["English", "Hindi"])),
+        User(name="Prof. Vikram Iyer", role=UserRole.FACULTY.value, department="Computer Science & Engineering", email="vikram.iyer@campusconnect.edu", languages_json=json.dumps(["English", "Malayalam", "Hindi"])),
+        User(name="Dr. K. Meenakshi", role=UserRole.FACULTY.value, department="Computer Science & Engineering", email="meenakshi.k@campusconnect.edu", languages_json=json.dumps(["English", "Telugu", "Tamil"])),
         # ECE
-        User(name="Dr. Priya Sundaram", role=UserRole.FACULTY.value, department="Electronics & Communication Engineering", email="priya.sundaram@campusconnect.edu"),
-        User(name="Dr. K. Venkatesh", role=UserRole.FACULTY.value, department="Electronics & Communication Engineering", email="venkatesh.k@campusconnect.edu"),
-        User(name="Prof. Suresh Natarajan", role=UserRole.FACULTY.value, department="Electronics & Communication Engineering", email="suresh.n@campusconnect.edu"),
-        User(name="Dr. Deepa Thomas", role=UserRole.FACULTY.value, department="Electronics & Communication Engineering", email="deepa.thomas@campusconnect.edu"),
+        User(name="Dr. Priya Sundaram", role=UserRole.FACULTY.value, department="Electronics & Communication Engineering", email="priya.sundaram@campusconnect.edu", languages_json=json.dumps(["English", "Tamil"])),
+        User(name="Dr. K. Venkatesh", role=UserRole.FACULTY.value, department="Electronics & Communication Engineering", email="venkatesh.k@campusconnect.edu", languages_json=json.dumps(["English", "Tamil", "Telugu"])),
+        User(name="Prof. Suresh Natarajan", role=UserRole.FACULTY.value, department="Electronics & Communication Engineering", email="suresh.n@campusconnect.edu", languages_json=json.dumps(["English", "Tamil"])),
+        User(name="Dr. Deepa Thomas", role=UserRole.FACULTY.value, department="Electronics & Communication Engineering", email="deepa.thomas@campusconnect.edu", languages_json=json.dumps(["English", "Malayalam"])),
         # MECH
-        User(name="Dr. R. Balaji", role=UserRole.FACULTY.value, department="Mechanical Engineering", email="balaji.r@campusconnect.edu"),
-        User(name="Dr. S. Mukherjee", role=UserRole.FACULTY.value, department="Mechanical Engineering", email="mukherjee.s@campusconnect.edu"),
-        User(name="Prof. Arvind Kumar", role=UserRole.FACULTY.value, department="Mechanical Engineering", email="arvind.k@campusconnect.edu"),
-        User(name="Dr. Neha Joshi", role=UserRole.FACULTY.value, department="Mechanical Engineering", email="neha.joshi@campusconnect.edu"),
+        User(name="Dr. R. Balaji", role=UserRole.FACULTY.value, department="Mechanical Engineering", email="balaji.r@campusconnect.edu", languages_json=json.dumps(["English", "Tamil", "Kannada"])),
+        User(name="Dr. S. Mukherjee", role=UserRole.FACULTY.value, department="Mechanical Engineering", email="mukherjee.s@campusconnect.edu", languages_json=json.dumps(["English", "Bengali", "Hindi"])),
+        User(name="Prof. Arvind Kumar", role=UserRole.FACULTY.value, department="Mechanical Engineering", email="arvind.k@campusconnect.edu", languages_json=json.dumps(["English", "Hindi"])),
+        User(name="Dr. Neha Joshi", role=UserRole.FACULTY.value, department="Mechanical Engineering", email="neha.joshi@campusconnect.edu", languages_json=json.dumps(["English", "Marathi", "Hindi"])),
     ]
     for f in faculty_members:
         session.add(f)
 
-    # 8 Students
+    # 8 Students with preferred consultation languages
     students = [
-        User(name="Meera Nair (Student A)", role=UserRole.STUDENT.value, department="Computer Science & Engineering", email="meera.nair@campusconnect.edu", section="CSE-A", semester=3),
-        User(name="Rohan Verma (Student B)", role=UserRole.STUDENT.value, department="Computer Science & Engineering", email="rohan.verma@campusconnect.edu", section="CSE-A", semester=3),
-        User(name="Karthik S. (Student C)", role=UserRole.STUDENT.value, department="Computer Science & Engineering", email="karthik.s@campusconnect.edu", section="CSE-A", semester=3),
-        User(name="Divya Patel (Student D)", role=UserRole.STUDENT.value, department="Computer Science & Engineering", email="divya.patel@campusconnect.edu", section="CSE-A", semester=3),
-        User(name="Arjun Rao (Student E)", role=UserRole.STUDENT.value, department="Electronics & Communication Engineering", email="arjun.rao@campusconnect.edu", section="ECE-A", semester=3),
-        User(name="Sneha Reddy (Student F)", role=UserRole.STUDENT.value, department="Electronics & Communication Engineering", email="sneha.reddy@campusconnect.edu", section="ECE-A", semester=3),
-        User(name="Aditya Joshi (Student G)", role=UserRole.STUDENT.value, department="Mechanical Engineering", email="aditya.joshi@campusconnect.edu", section="ME-A", semester=5),
-        User(name="Ananya Sen (Student H)", role=UserRole.STUDENT.value, department="Mechanical Engineering", email="ananya.sen@campusconnect.edu", section="ME-A", semester=5),
+        User(name="Meera Nair (Student A)", role=UserRole.STUDENT.value, department="Computer Science & Engineering", email="meera.nair@campusconnect.edu", section="CSE-A", semester=3, languages_json=json.dumps(["English", "Tamil", "Malayalam"])),
+        User(name="Rohan Verma (Student B)", role=UserRole.STUDENT.value, department="Computer Science & Engineering", email="rohan.verma@campusconnect.edu", section="CSE-A", semester=3, languages_json=json.dumps(["English", "Hindi"])),
+        User(name="Karthik S. (Student C)", role=UserRole.STUDENT.value, department="Computer Science & Engineering", email="karthik.s@campusconnect.edu", section="CSE-A", semester=3, languages_json=json.dumps(["English", "Tamil"])),
+        User(name="Divya Patel (Student D)", role=UserRole.STUDENT.value, department="Computer Science & Engineering", email="divya.patel@campusconnect.edu", section="CSE-A", semester=3, languages_json=json.dumps(["English", "Gujarati", "Hindi"])),
+        User(name="Arjun Rao (Student E)", role=UserRole.STUDENT.value, department="Electronics & Communication Engineering", email="arjun.rao@campusconnect.edu", section="ECE-A", semester=3, languages_json=json.dumps(["English", "Kannada", "Telugu"])),
+        User(name="Sneha Reddy (Student F)", role=UserRole.STUDENT.value, department="Electronics & Communication Engineering", email="sneha.reddy@campusconnect.edu", section="ECE-A", semester=3, languages_json=json.dumps(["English", "Telugu"])),
+        User(name="Aditya Joshi (Student G)", role=UserRole.STUDENT.value, department="Mechanical Engineering", email="aditya.joshi@campusconnect.edu", section="ME-A", semester=5, languages_json=json.dumps(["English", "Marathi", "Hindi"])),
+        User(name="Ananya Sen (Student H)", role=UserRole.STUDENT.value, department="Mechanical Engineering", email="ananya.sen@campusconnect.edu", section="ME-A", semester=5, languages_json=json.dumps(["English", "Bengali", "Hindi"])),
     ]
     for s in students:
         session.add(s)
@@ -137,6 +138,79 @@ def seed_all_data(session: Session, reset_existing: bool = True) -> dict:
         session.add(c)
         course_objs[code] = c
 
+    session.commit()
+
+    # 3b. Topic Prerequisites (Deterministic Concept Foundation Mappings)
+    prereq_mappings = [
+        # CS201 - Data Structures
+        ("CS201", "Binary Trees", "Pointers and Dynamic Memory Allocation in C",
+         "Binary tree nodes are dynamically allocated structs linked via pointer references (left and right child pointers)."),
+        ("CS201", "Binary Trees", "Recursion & Call Stack Basics",
+         "Binary tree operations including insertion, depth calculation, and traversals rely on recursive function calls."),
+        ("CS201", "Graphs", "Adjacency Matrix & Linked Lists",
+         "Graph representation in code requires array-based matrices or lists of linked vertex edges."),
+        ("CS201", "Graphs", "Queue & Stack Data Structures",
+         "Breadth-First Search (BFS) utilizes FIFO queues while Depth-First Search (DFS) uses LIFO stacks."),
+        ("CS201", "Dynamic Programming", "Recursion & Memoization",
+         "DP solves overlapping subproblems by caching recursive call results in lookup tables."),
+        ("CS201", "Sorting", "Algorithmic Complexity & Big-O Notation",
+         "Understanding QuickSort and MergeSort efficiency requires comparing worst-case and average-case runtimes."),
+        ("CS201", "Hashing", "Array Indexing & Modular Arithmetic",
+         "Hash functions map keys to array bucket indices using modulus operations with prime table sizes."),
+        
+        # CS203 - Digital Logic Design
+        ("CS203", "Counters", "Flip-Flops (D and JK)",
+         "Synchronous and ripple binary counters are sequential circuits built directly by chaining flip-flops."),
+        ("CS203", "Flip-Flops", "Logic Gates & Latches",
+         "Bistable multivibrators are constructed using cross-coupled NAND or NOR gates."),
+        ("CS203", "K-Maps", "Boolean Algebra & Truth Tables",
+         "Karnaugh maps minimize Sum-of-Products expressions by grouping adjacent Gray-coded cells."),
+        ("CS203", "Multiplexers", "Combinational Logic & Decoders",
+         "Data selectors route multiple input lines to a single output using internal address decoders."),
+
+        # EC201 - Electron Devices and Circuits
+        ("EC201", "CE/CS Amplifier Frequency Response", "BJT Small-Signal Model & Hybrid-Pi Parameters",
+         "High-frequency gain roll-off calculations depend on internal base-collector/drain-gate capacitances."),
+        ("EC201", "BJT DC Biasing & Q-Point", "Diode IV Curve & Kirchhoff's Voltage Law (KVL)",
+         "Establishing stable active-region bias requires solving loop equations across forward-biased base-emitter junctions."),
+        ("EC201", "Negative Feedback Topologies", "Two-Port Network Theory",
+         "Analyzing voltage/current feedback amplifiers requires evaluating input and output impedances with feedback loading."),
+
+        # EC203 - Signals and Systems
+        ("EC203", "Continuous-Time Fourier Transform", "Fourier Series & Complex Exponentials",
+         "The continuous Fourier transform extends periodic harmonic analysis to infinite-period non-periodic waveforms."),
+        ("EC203", "Z-Transform ROC Analysis", "Geometric Series & Radius of Convergence",
+         "Regions of convergence (ROC) in the z-plane are governed by the absolute summability of discrete power series."),
+        ("EC203", "LTI System Properties", "Linearity, Time-Invariance & Impulse Response",
+         "System response to arbitrary inputs is derived by convolving the input signal with the unit impulse response."),
+
+        # 18ECC302J - VLSI Design
+        ("18ECC302J", "CMOS Inverter Sizing & DC VTC", "MOSFET Saturation Current Equations",
+         "Inverter switching threshold and noise margins are determined by equating NMOS and PMOS saturation currents."),
+        ("18ECC302J", "Logical Effort & Delay Estimation", "RC Delay Models & Parasitic Capacitance",
+         "Logical effort quantifies propagation delay as the sum of intrinsic delay and load-dependent effort."),
+
+        # CS301 - Operating Systems
+        ("CS301", "Process Synchronization", "Race Conditions & Atomic Operations",
+         "Mutex locks and semaphores prevent non-deterministic shared memory corruption in multi-threaded execution."),
+        ("CS301", "Virtual Memory", "Paging & Memory Management Units (MMU)",
+         "Page replacement and demand paging algorithms manage translation between virtual addresses and physical RAM frames."),
+
+        # ME301 - Thermodynamics II
+        ("ME301", "Rankine Cycle", "First & Second Laws of Thermodynamics",
+         "Steam power cycle thermal efficiency relies on energy conservation and isentropic turbine expansion."),
+        ("ME301", "Refrigeration", "Carnot Reversed Cycle & COP Definition",
+         "Vapor compression refrigeration cycles operate on reversed heat engine principles measured by coefficient of performance."),
+    ]
+    for code, topic, prereq, expl in prereq_mappings:
+        c_inst = course_objs.get(code)
+        session.add(TopicPrerequisite(
+            course_id=c_inst.id if c_inst else None,
+            subject_code=code,
+            topic=topic,
+            prerequisite_topic=prereq,
+            explanation=expl
+        ))
     session.commit()
 
     # 4. FacultyCourse links
@@ -466,6 +540,295 @@ def seed_all_data(session: Session, reset_existing: bool = True) -> dict:
     ]
     for r in group_test_requests:
         session.add(r)
+
+    # 10. Seed Diverse Historical & Active Consultation Requests for Common Doubt Topics Analytics
+    historical_requests = [
+        # CS201 - Dynamic Programming (3 requests, 3 unique students)
+        MeetingRequest(
+            student_id=s_meera.id,
+            faculty_id=f_raman.id,
+            course_id=course_objs["CS201"].id,
+            topic_tag="Dynamic Programming",
+            type="doubt",
+            description="0/1 Knapsack memoization table doubt",
+            preferred_window_start="2026-10-18T10:00:00",
+            preferred_window_end="2026-10-18T11:00:00",
+            slot_start="2026-10-18T10:00:00",
+            slot_end="2026-10-18T10:30:00",
+            duration=30,
+            state=RequestState.COMPLETED.value,
+            source=RequestSource.OFFICE_HOUR.value,
+            location="Cabin 304, Academic Block A",
+            created_at="2026-10-17T09:30:00",
+            updated_at="2026-10-18T10:35:00"
+        ),
+        MeetingRequest(
+            student_id=s_rohan.id,
+            faculty_id=f_raman.id,
+            course_id=course_objs["CS201"].id,
+            topic_tag="Dynamic Programming",
+            type="doubt",
+            description="Longest common subsequence state transition",
+            preferred_window_start="2026-10-19T14:00:00",
+            preferred_window_end="2026-10-19T15:00:00",
+            slot_start="2026-10-19T14:00:00",
+            slot_end="2026-10-19T14:30:00",
+            duration=30,
+            state=RequestState.CONFIRMED.value,
+            source=RequestSource.OFFICE_HOUR.value,
+            location="Cabin 304, Academic Block A",
+            created_at="2026-10-18T11:00:00",
+            updated_at="2026-10-18T12:00:00"
+        ),
+        MeetingRequest(
+            student_id=s_divya.id,
+            faculty_id=f_raman.id,
+            course_id=course_objs["CS201"].id,
+            topic_tag="Dynamic Programming",
+            type="doubt",
+            description="Matrix chain multiplication indexing issue",
+            preferred_window_start="2026-10-20T11:00:00",
+            preferred_window_end="2026-10-20T12:00:00",
+            slot_start="2026-10-20T11:00:00",
+            slot_end="2026-10-20T11:15:00",
+            duration=15,
+            state=RequestState.COMPLETED.value,
+            source=RequestSource.OFFICE_HOUR.value,
+            location="Cabin 304, Academic Block A",
+            created_at="2026-10-19T14:00:00",
+            updated_at="2026-10-20T11:20:00"
+        ),
+
+        # CS201 - Sorting (2 requests, 2 unique students)
+        MeetingRequest(
+            student_id=s_karthik.id,
+            faculty_id=f_raman.id,
+            course_id=course_objs["CS201"].id,
+            topic_tag="Sorting",
+            type="doubt",
+            description="QuickSort pivot selection partition worst-case",
+            preferred_window_start="2026-10-17T15:00:00",
+            preferred_window_end="2026-10-17T16:00:00",
+            slot_start="2026-10-17T15:00:00",
+            slot_end="2026-10-17T15:15:00",
+            duration=15,
+            state=RequestState.COMPLETED.value,
+            source=RequestSource.OFFICE_HOUR.value,
+            location="Cabin 304, Academic Block A",
+            created_at="2026-10-16T16:00:00",
+            updated_at="2026-10-17T15:20:00"
+        ),
+        MeetingRequest(
+            student_id=s_rohan.id,
+            faculty_id=f_raman.id,
+            course_id=course_objs["CS201"].id,
+            topic_tag="Sorting",
+            type="doubt",
+            description="MergeSort space complexity recurrence",
+            preferred_window_start="2026-10-22T10:00:00",
+            preferred_window_end="2026-10-22T11:00:00",
+            slot_start="2026-10-22T10:00:00",
+            slot_end="2026-10-22T10:15:00",
+            duration=15,
+            state=RequestState.CONFIRMED.value,
+            source=RequestSource.OFFICE_HOUR.value,
+            location="Cabin 304, Academic Block A",
+            created_at="2026-10-20T09:00:00",
+            updated_at="2026-10-20T10:00:00"
+        ),
+
+        # CS203 - Counters (3 requests, 3 unique students)
+        MeetingRequest(
+            student_id=s_divya.id,
+            faculty_id=f_sharma.id,
+            course_id=course_objs["CS203"].id,
+            topic_tag="Counters",
+            type="doubt",
+            description="Mod-12 asynchronous counter design with 7490",
+            preferred_window_start="2026-10-18T14:00:00",
+            preferred_window_end="2026-10-18T15:00:00",
+            slot_start="2026-10-18T14:00:00",
+            slot_end="2026-10-18T14:30:00",
+            duration=30,
+            state=RequestState.COMPLETED.value,
+            source=RequestSource.OFFICE_HOUR.value,
+            location="Cabin 210, Academic Block B",
+            created_at="2026-10-17T11:00:00",
+            updated_at="2026-10-18T14:35:00"
+        ),
+        MeetingRequest(
+            student_id=s_karthik.id,
+            faculty_id=f_sharma.id,
+            course_id=course_objs["CS203"].id,
+            topic_tag="Counters",
+            type="doubt",
+            description="Ring counter vs Johnson counter state transitions",
+            preferred_window_start="2026-10-20T15:00:00",
+            preferred_window_end="2026-10-20T16:00:00",
+            slot_start="2026-10-20T15:00:00",
+            slot_end="2026-10-20T15:30:00",
+            duration=30,
+            state=RequestState.CONFIRMED.value,
+            source=RequestSource.OFFICE_HOUR.value,
+            location="Cabin 210, Academic Block B",
+            created_at="2026-10-19T10:00:00",
+            updated_at="2026-10-19T12:00:00"
+        ),
+        MeetingRequest(
+            student_id=s_meera.id,
+            faculty_id=f_sharma.id,
+            course_id=course_objs["CS203"].id,
+            topic_tag="Counters",
+            type="doubt",
+            description="Synchronous up/down counter lock-out state recovery",
+            preferred_window_start="2026-10-22T14:00:00",
+            preferred_window_end="2026-10-22T15:00:00",
+            slot_start="2026-10-22T14:00:00",
+            slot_end="2026-10-22T14:15:00",
+            duration=15,
+            state=RequestState.PENDING.value,
+            source=RequestSource.OFFICE_HOUR.value,
+            location="Cabin 210, Academic Block B",
+            created_at="2026-10-20T15:00:00",
+            updated_at="2026-10-20T15:00:00"
+        ),
+
+        # EC201 - CE/CS Amplifier Frequency Response (2 requests, 2 unique students)
+        MeetingRequest(
+            student_id=s_arjun.id,
+            faculty_id=f_priya.id,
+            course_id=course_objs["EC201"].id,
+            topic_tag="CE/CS Amplifier Frequency Response",
+            type="doubt",
+            description="Miller effect capacitance multiplication formula",
+            preferred_window_start="2026-10-19T11:00:00",
+            preferred_window_end="2026-10-19T12:00:00",
+            slot_start="2026-10-19T11:00:00",
+            slot_end="2026-10-19T11:30:00",
+            duration=30,
+            state=RequestState.COMPLETED.value,
+            source=RequestSource.OFFICE_HOUR.value,
+            location="Cabin 402, Academic Block C",
+            created_at="2026-10-18T08:00:00",
+            updated_at="2026-10-19T11:35:00"
+        ),
+        MeetingRequest(
+            student_id=students[5].id, # Sneha Reddy
+            faculty_id=f_priya.id,
+            course_id=course_objs["EC201"].id,
+            topic_tag="CE/CS Amplifier Frequency Response",
+            type="doubt",
+            description="3dB cutoff frequency calculation for CS stage",
+            preferred_window_start="2026-10-21T10:00:00",
+            preferred_window_end="2026-10-21T11:00:00",
+            slot_start="2026-10-21T10:00:00",
+            slot_end="2026-10-21T10:30:00",
+            duration=30,
+            state=RequestState.CONFIRMED.value,
+            source=RequestSource.OFFICE_HOUR.value,
+            location="Cabin 402, Academic Block C",
+            created_at="2026-10-20T14:00:00",
+            updated_at="2026-10-20T16:00:00"
+        ),
+
+        # ME301 - Rankine Cycle (2 requests, 2 unique students)
+        MeetingRequest(
+            student_id=students[6].id, # Aditya Joshi
+            faculty_id=f_balaji.id,
+            course_id=course_objs["ME301"].id,
+            topic_tag="Rankine Cycle",
+            type="doubt",
+            description="Reheat Rankine cycle T-s diagram and pump work",
+            preferred_window_start="2026-10-18T11:00:00",
+            preferred_window_end="2026-10-18T12:00:00",
+            slot_start="2026-10-18T11:00:00",
+            slot_end="2026-10-18T11:30:00",
+            duration=30,
+            state=RequestState.COMPLETED.value,
+            source=RequestSource.OFFICE_HOUR.value,
+            location="Cabin 108, Mechanical Block",
+            created_at="2026-10-17T14:00:00",
+            updated_at="2026-10-18T11:35:00"
+        ),
+        MeetingRequest(
+            student_id=students[7].id, # Ananya Sen
+            faculty_id=f_balaji.id,
+            course_id=course_objs["ME301"].id,
+            topic_tag="Rankine Cycle",
+            type="doubt",
+            description="Feedwater heater mass fraction balance",
+            preferred_window_start="2026-10-20T14:00:00",
+            preferred_window_end="2026-10-20T15:00:00",
+            slot_start="2026-10-20T14:00:00",
+            slot_end="2026-10-20T14:30:00",
+            duration=30,
+            state=RequestState.CONFIRMED.value,
+            source=RequestSource.OFFICE_HOUR.value,
+            location="Cabin 108, Mechanical Block",
+            created_at="2026-10-19T16:00:00",
+            updated_at="2026-10-20T09:00:00"
+        ),
+
+        # Verification of Exclusion: Cancelled and Rejected Requests
+        MeetingRequest(
+            student_id=s_divya.id,
+            faculty_id=f_raman.id,
+            course_id=course_objs["CS201"].id,
+            topic_tag="Binary Trees",
+            type="doubt",
+            description="Cancelled query on Red-Black trees",
+            preferred_window_start="2026-10-16T14:00:00",
+            preferred_window_end="2026-10-16T15:00:00",
+            slot_start="2026-10-16T14:00:00",
+            slot_end="2026-10-16T14:30:00",
+            duration=30,
+            state=RequestState.CANCELLED.value,
+            source=RequestSource.OFFICE_HOUR.value,
+            location="Cabin 304, Academic Block A",
+            created_at="2026-10-15T10:00:00",
+            updated_at="2026-10-15T12:00:00"
+        ),
+        MeetingRequest(
+            student_id=students[6].id, # Aditya Joshi
+            faculty_id=f_raman.id,
+            course_id=course_objs["CS201"].id,
+            topic_tag="Binary Trees",
+            type="doubt",
+            description="Rejected out-of-scope query",
+            preferred_window_start="2026-10-16T15:00:00",
+            preferred_window_end="2026-10-16T16:00:00",
+            slot_start="2026-10-16T15:00:00",
+            slot_end="2026-10-16T15:30:00",
+            duration=30,
+            state=RequestState.REJECTED.value,
+            source=RequestSource.OFFICE_HOUR.value,
+            location="Cabin 304, Academic Block A",
+            created_at="2026-10-15T11:00:00",
+            updated_at="2026-10-15T14:00:00"
+        ),
+
+        # Verification of No-Show counting
+        MeetingRequest(
+            student_id=students[7].id, # Ananya Sen
+            faculty_id=f_raman.id,
+            course_id=course_objs["CS201"].id,
+            topic_tag="Binary Trees",
+            type="doubt",
+            description="Student missed consultation slot",
+            preferred_window_start="2026-10-17T11:00:00",
+            preferred_window_end="2026-10-17T12:00:00",
+            slot_start="2026-10-17T11:00:00",
+            slot_end="2026-10-17T11:15:00",
+            duration=15,
+            state=RequestState.NO_SHOW.value,
+            source=RequestSource.OFFICE_HOUR.value,
+            location="Cabin 304, Academic Block A",
+            created_at="2026-10-16T14:00:00",
+            updated_at="2026-10-17T11:30:00"
+        ),
+    ]
+    for hr in historical_requests:
+        session.add(hr)
 
     session.commit()
 

@@ -321,12 +321,14 @@ def faculty_directory(
     request: Request,
     search: Optional[str] = Query(None),
     department: Optional[str] = Query(None),
+    language: Optional[str] = Query(None),
     only_office_hours: Optional[bool] = Query(False),
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     """
-    Searchable, filterable Faculty Directory with Three-Layer Availability badges.
+    Searchable, filterable Faculty Directory with Three-Layer Availability badges
+    and Language-Based Matching prioritisation.
     """
     from app.main import templates
 
@@ -336,8 +338,25 @@ def faculty_directory(
         stmt = stmt.where(User.department == department)
     all_faculty = session.exec(stmt).all()
 
+    # Collect all available languages across all faculty for filter dropdown
+    all_faculty_unfiltered = session.exec(select(User).where(User.role == UserRole.FACULTY.value)).all()
+    all_languages = sorted(list({
+        l.strip()
+        for f in all_faculty_unfiltered
+        for l in f.languages
+        if l.strip()
+    }))
+
+    student_langs_lower = {l.strip().lower() for l in current_user.languages}
+
     faculty_list = []
     for f in all_faculty:
+        # Check language filter
+        if language and language != "All" and language.strip():
+            fac_langs_lower = [l.strip().lower() for l in f.languages]
+            if language.strip().lower() not in fac_langs_lower:
+                continue
+
         # Get taught courses
         stmt_fc = select(FacultyCourse).where(FacultyCourse.faculty_id == f.id)
         fc_records = session.exec(stmt_fc).all()
@@ -351,7 +370,7 @@ def faculty_directory(
         if only_office_hours and not has_oh:
             continue
 
-        # Check search string match (name, course code, course name, topic tags)
+        # Check search string match (name, course code, course name, topic tags, languages)
         if search:
             q = search.lower().strip()
             name_match = q in f.name.lower() or q in f.email.lower()
@@ -359,15 +378,47 @@ def faculty_directory(
                 q in c.code.lower() or q in c.name.lower() or any(q in t.lower() for t in c.topic_tags)
                 for c in courses
             )
-            if not (name_match or course_match):
+            lang_match = any(q in l.lower() for l in f.languages)
+            if not (name_match or course_match or lang_match):
                 continue
+
+        # Check shared languages with current user
+        shared = [l.strip() for l in f.languages if l.strip().lower() in student_langs_lower]
+        has_lang_match = len(shared) > 0
+
+        # Build transparent recommendation reason
+        reasons = []
+        if has_lang_match:
+            reasons.append(f"Shared language: {', '.join(shared)}")
+        else:
+            reasons.append(f"Speaks: {', '.join(f.languages)} (no language overlap)")
+
+        if courses:
+            reasons.append(f"{len(courses)} course(s) taught")
+        if has_oh:
+            reasons.append(f"{len(office_hours)} office hour window(s)")
 
         faculty_list.append({
             "faculty": f,
             "courses": courses,
             "office_hours": office_hours,
-            "has_office_hours": has_oh
+            "has_office_hours": has_oh,
+            "shared_languages": shared,
+            "has_language_match": has_lang_match,
+            "recommendation_reason": "; ".join(reasons)
         })
+
+    # Prioritise faculty who share at least one language with the student
+    # Note: Does NOT hide non-matching faculty! They are listed after matching faculty.
+    if current_user.role == UserRole.STUDENT.value:
+        faculty_list.sort(
+            key=lambda x: (
+                1 if x["has_language_match"] else 0,
+                1 if x["has_office_hours"] else 0,
+                x["faculty"].name
+            ),
+            reverse=True
+        )
 
     # Get unique department list
     dept_stmt = select(User.department).where(User.role == UserRole.FACULTY.value).distinct()
@@ -377,8 +428,10 @@ def faculty_directory(
     ctx.update({
         "faculty_list": faculty_list,
         "departments": departments,
+        "all_languages": all_languages,
         "current_search": search or "",
         "current_dept": department or "All",
+        "current_language": language or "All",
         "only_office_hours": only_office_hours
     })
     return templates.TemplateResponse(request=request, name="directory.html", context=ctx)
